@@ -100,8 +100,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <main className="min-h-screen bg-[#ececec]">
-      <section className="bg-[#111a2b]">
-        <div className="mx-auto w-full max-w-[1200px] px-5 py-10 text-white md:px-8 md:py-14">
+      <section
+        className="relative bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/home-overlay.svg')" }}
+      >
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="relative z-10 mx-auto w-full max-w-[1200px] px-5 py-10 text-white md:px-8 md:py-14">
           <Text as="h1" size="lg" className="font-black uppercase">
             {t.happeningTitle}
           </Text>

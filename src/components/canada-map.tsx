@@ -15,29 +15,35 @@ type CalcData = {
 const numberFmt = (value: number) => value.toLocaleString();
 
 const colorRanges = [
-  { bg: "#ffffff", text: "0" },
-  { bg: "#ffcccc", text: "1 - 2,999" },
-  { bg: "#ff8080", text: "3,000 - 5,999" },
-  { bg: "#ff4d4d", text: "6,000 - 8,999" },
-  { bg: "#ff1919", text: "9,000 - 11,999" },
-  { bg: "#c50505", text: "12,000 - 14,999" },
-  { bg: "#800000", text: "15,000 +" },
+  { bg: "#E8F5E9", text: "0 - 500" },
+  { bg: "#C8E6C9", text: "501 - 1000" },
+  { bg: "#A5D6A7", text: "1001 - 1500" },
+  { bg: "#81C784", text: "1501 - 2000" },
+  { bg: "#66BB6A", text: "2001 - 2500" },
+  { bg: "#4CAF50", text: "2501 - 3000" },
+  { bg: "#43A047", text: "3001 - 3500" },
+  { bg: "#2E7D32", text: "3501 - 4000" },
+  { bg: "#1B5E20", text: "4001 - 4500" },
+  { bg: "#0D3D12", text: "4501 - 5000" },
 ];
 
 const rankColors = [
-  { bg: "#ff4d4d", text: "Rank: 1" },
-  { bg: "#ff8080", text: "Rank: 2" },
-  { bg: "#ffcccc", text: "Rank: 3" },
+  { bg: "#0D3D12", text: "Rank: 1" },
+  { bg: "#2E7D32", text: "Rank: 2" },
+  { bg: "#66BB6A", text: "Rank: 3" },
 ];
 
 const submissionColor = (count: number) => {
-  if (count >= 15000) return "#800000";
-  if (count >= 12000) return "#c50505";
-  if (count >= 9000) return "#ff1919";
-  if (count >= 6000) return "#ff4d4d";
-  if (count >= 3000) return "#ff8080";
-  if (count >= 1) return "#ffcccc";
-  return "#ffffff";
+  if (count >= 4501) return "#0D3D12";
+  if (count >= 4001) return "#1B5E20";
+  if (count >= 3501) return "#2E7D32";
+  if (count >= 3001) return "#43A047";
+  if (count >= 2501) return "#4CAF50";
+  if (count >= 2001) return "#66BB6A";
+  if (count >= 1501) return "#81C784";
+  if (count >= 1001) return "#A5D6A7";
+  if (count >= 501) return "#C8E6C9";
+  return "#E8F5E9";
 };
 
 type CanadaMapProps = {
@@ -79,9 +85,9 @@ export default function CanadaMap({ language }: CanadaMapProps) {
       return submissionColor(mapByProvince.get(provinceName) ?? 0);
     }
     const rank = rankedIds.indexOf(provinceName);
-    if (rank === 0) return "#ff4d4d";
-    if (rank === 1) return "#ff8080";
-    if (rank === 2) return "#ffcccc";
+    if (rank === 0) return "#0D3D12";
+    if (rank === 1) return "#2E7D32";
+    if (rank === 2) return "#66BB6A";
     return "#ffffff";
   };
 

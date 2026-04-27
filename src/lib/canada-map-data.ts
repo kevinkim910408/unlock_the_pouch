@@ -101,19 +101,19 @@ const provinceById: Record<string, string> = {
 };
 
 const mockCountByProvince: Record<string, number> = {
-  Alberta: 17250,
-  "British Columbia": 13640,
-  Manitoba: 10820,
-  "New Brunswick": 8740,
-  "Newfoundland and Labrador": 6620,
-  "Northwest Territories": 4980,
-  "Nova Scotia": 3820,
-  Nunavut: 2640,
-  Ontario: 14980,
-  "Prince Edward Island": 1210,
-  Quebec: 9520,
-  Saskatchewan: 7310,
-  Yukon: 430,
+  Alberta: 4720,
+  "British Columbia": 4180,
+  Manitoba: 2960,
+  "New Brunswick": 1680,
+  "Newfoundland and Labrador": 1210,
+  "Northwest Territories": 380,
+  "Nova Scotia": 3620,
+  Nunavut: 740,
+  Ontario: 4510,
+  "Prince Edward Island": 520,
+  Quebec: 3230,
+  Saskatchewan: 2140,
+  Yukon: 980,
 };
 
 export const createMockProvinceCounts = (): ProvinceCount[] =>

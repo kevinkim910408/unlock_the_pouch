@@ -56,10 +56,10 @@ export default function SiteHeader() {
           </div>
         ) : (
           <div className="flex h-8 w-[170px] items-center justify-end gap-3">
-            <Image src="/twitter.svg" alt="Twitter" width={20} height={20} />
+            {/* <Image src="/twitter.svg" alt="Twitter" width={20} height={20} />
             <Image src="/ig.svg" alt="Instagram" width={20} height={20} />
             <Image src="/utube.svg" alt="YouTube" width={20} height={20} />
-            <Image src="/fb.svg" alt="Facebook" width={20} height={20} />
+            <Image src="/fb.svg" alt="Facebook" width={20} height={20} /> */}
           </div>
         )}
       </div>
