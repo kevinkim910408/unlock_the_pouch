@@ -2,6 +2,7 @@
 
 import Text from "@/components/text";
 import ProgressSteps from "@/components/progress-steps";
+import { PREMIER_EMAIL_BY_PROVINCE } from "@/lib/campaign";
 import { CampaignLanguage } from "@/types/campaign";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -64,6 +65,15 @@ const SECTION_TWO = [
   "Topic 6",
 ];
 
+type MpLookupResponse = {
+  ministerEmail?: string;
+  mp?: {
+    name?: string;
+    email?: string;
+    districtName?: string;
+  } | null;
+};
+
 export default function TopicsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,7 +102,7 @@ export default function TopicsPage() {
     router.push(`/form?lang=${language}`);
   }
 
-  function handleNext() {
+  async function handleNext() {
     if (sectionOneSelected.length !== 2 || sectionTwoSelected.length !== 2) {
       setError(t.error);
       return;
@@ -103,12 +113,56 @@ export default function TopicsPage() {
       ? (JSON.parse(rawInfo) as Record<string, string | boolean>)
       : {};
 
-    const letterBody = [
+    const postalCode =
+      typeof formInfo.postalCode === "string" ? formInfo.postalCode : "";
+    let mpEmail: string | undefined;
+    let mpName: string | undefined;
+    let ministerEmail = MINISTER_EMAIL_FALLBACK;
+
+    if (postalCode) {
+      try {
+        const response = await fetch(
+          `/api/mp-lookup?postalCode=${encodeURIComponent(postalCode)}`,
+          { cache: "no-store" },
+        );
+        if (response.ok) {
+          const lookup = (await response.json()) as MpLookupResponse;
+          ministerEmail = lookup.ministerEmail ?? MINISTER_EMAIL_FALLBACK;
+          mpEmail = lookup.mp?.email;
+          mpName = lookup.mp?.name;
+        }
+      } catch {
+        // Keep fallback values if lookup fails.
+      }
+    }
+
+    const ministerLetterBody = [
       "To the Honourable Marjorie Michel, Minister of Health,",
       "",
-      "Dear Minister,",
+      "Dear Minister Holland,",
       "",
       "I am writing to share my priorities:",
+      ...sectionOneSelected.map((topic, idx) => `${idx + 1}. ${topic}`),
+      ...sectionTwoSelected.map((topic, idx) => `${idx + 3}. ${topic}`),
+      "",
+      "Thank you for your attention.",
+      "",
+      `${formInfo.firstName ?? ""} ${formInfo.lastName ?? ""}`.trim(),
+      `${formInfo.city ?? ""}, ${formInfo.province ?? ""} ${formInfo.postalCode ?? ""}`.trim(),
+      mpName ? `CC: ${mpName}` : "CC: Local MP",
+    ].join("\n");
+
+    const premierEmail =
+      typeof formInfo.province === "string"
+        ? PREMIER_EMAIL_BY_PROVINCE[formInfo.province]
+        : undefined;
+
+    const premierLetterBody = [
+      "To the Premier,",
+      "",
+      "Dear Premier,",
+      "",
+      "I am writing to share my priorities for provincial action:",
       ...sectionOneSelected.map((topic, idx) => `${idx + 1}. ${topic}`),
       ...sectionTwoSelected.map((topic, idx) => `${idx + 3}. ${topic}`),
       "",
@@ -121,9 +175,13 @@ export default function TopicsPage() {
     localStorage.setItem(
       "campaign-preview",
       JSON.stringify({
-        letterBody,
-        ministerEmail: MINISTER_EMAIL_FALLBACK,
-        mpEmail: undefined,
+        letterBody: ministerLetterBody,
+        ministerLetterBody,
+        premierLetterBody,
+        ministerEmail,
+        mpEmail,
+        mpName,
+        premierEmail,
         province: (formInfo.province as string) ?? "ON",
         firstName: (formInfo.firstName as string) ?? "",
         lastName: (formInfo.lastName as string) ?? "",

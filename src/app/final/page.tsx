@@ -9,10 +9,16 @@ import { useMemo, useState } from "react";
 
 type PreviewData = {
   letterBody?: string;
+  ministerLetterBody?: string;
+  premierLetterBody?: string;
   province?: string;
   firstName?: string;
   lastName?: string;
   language?: CampaignLanguage;
+  ministerEmail?: string;
+  mpEmail?: string;
+  mpName?: string;
+  premierEmail?: string;
 };
 
 type Copy = {
@@ -30,6 +36,7 @@ type Copy = {
   copyLetter: string;
   copied: string;
   complete: string;
+  sendTo: string;
 };
 
 const COPY: Record<CampaignLanguage, Copy> = {
@@ -53,6 +60,7 @@ const COPY: Record<CampaignLanguage, Copy> = {
     copyLetter: "Copy letter",
     copied: "Letter has been copied to your clipboard.",
     complete: "Complete",
+    sendTo: "Send email to:",
   },
   fr: {
     progress: [
@@ -75,6 +83,7 @@ const COPY: Record<CampaignLanguage, Copy> = {
     copyLetter: "Copier la lettre",
     copied: "La lettre a ete copiee dans votre presse-papiers.",
     complete: "Terminer",
+    sendTo: "Envoyer le courriel a :",
   },
 };
 
@@ -130,6 +139,8 @@ type LetterPanelProps = {
   copyLetter: string;
   copied: string;
   body: string;
+  recipients: string[];
+  sendToLabel: string;
 };
 
 function LetterPanel({
@@ -141,6 +152,8 @@ function LetterPanel({
   copyLetter,
   copied,
   body,
+  recipients,
+  sendToLabel,
 }: LetterPanelProps) {
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -195,6 +208,18 @@ function LetterPanel({
         Please select your email provider.
       </Text>
       <ProviderRow />
+      {recipients.length > 0 ? (
+        <div className="mt-3">
+          <Text as="p" size="xs" className="font-black text-[#444]">
+            {sendToLabel}
+          </Text>
+          {recipients.map((recipient) => (
+            <Text key={recipient} as="p" size="xs" className="mt-1 text-[#444]">
+              {recipient}
+            </Text>
+          ))}
+        </div>
+      ) : null}
 
       <Text as="p" size="xs" className="mt-5 font-black text-[#4fa9db]">
         {step3}
@@ -229,10 +254,33 @@ export default function FinalPage() {
 
   const language: CampaignLanguage = preview?.language === "fr" ? "fr" : "en";
   const t = COPY[language];
-  const letterBody = useMemo(
-    () => preview?.letterBody ?? SAMPLE_LETTER,
+  const ministerLetterBody = useMemo(
+    () => preview?.ministerLetterBody ?? preview?.letterBody ?? SAMPLE_LETTER,
     [preview],
   );
+  const premierLetterBody = useMemo(
+    () => preview?.premierLetterBody ?? preview?.letterBody ?? SAMPLE_LETTER,
+    [preview],
+  );
+  const recipientLines = useMemo(() => {
+    const lines: string[] = [];
+    lines.push(
+      `Honourable Marjorie Michel (${preview?.ministerEmail ?? "marjorie.michel@parl.gc.ca"})`,
+    );
+
+    if (preview?.mpEmail) {
+      const label = preview.mpName ? preview.mpName : "Local MP";
+      lines.push(`${label} (${preview.mpEmail})`);
+    } else if (preview?.mpName) {
+      lines.push(preview.mpName);
+    }
+
+    return lines;
+  }, [preview]);
+  const premierRecipientLines = useMemo(() => {
+    if (!preview?.premierEmail) return [];
+    return [`Premier (${preview.premierEmail})`];
+  }, [preview]);
 
   return (
     <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]">
@@ -279,7 +327,9 @@ export default function FinalPage() {
             step4={t.step4}
             copyLetter={t.copyLetter}
             copied={t.copied}
-            body={letterBody}
+            body={ministerLetterBody}
+            recipients={recipientLines}
+            sendToLabel={t.sendTo}
           />
         </div>
 
@@ -292,7 +342,9 @@ export default function FinalPage() {
             step4={t.step4}
             copyLetter={t.copyLetter}
             copied={t.copied}
-            body={letterBody}
+            body={premierLetterBody}
+            recipients={premierRecipientLines}
+            sendToLabel={t.sendTo}
           />
         </div>
 
