@@ -9,7 +9,7 @@ export default function ThankYouPage() {
       <section className="relative mx-auto w-full max-w-[1200px] px-5 py-10 text-white md:px-8 md:py-14">
         <Text
           as="h1"
-          size="xl"
+          size="lg"
           className="font-black uppercase leading-[0.92] text-[#59b0df]"
         >
           Thank You
@@ -30,7 +30,7 @@ export default function ThankYouPage() {
 
         <Text
           as="h2"
-          size="xl"
+          size="lg"
           className="mt-10 font-black uppercase leading-[0.92] text-[#59b0df]"
         >
           Merci

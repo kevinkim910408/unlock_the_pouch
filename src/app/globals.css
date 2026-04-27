@@ -40,3 +40,33 @@ body {
     line-height: 1.4;
   }
 }
+
+.map-path {
+  stroke: #f3f4f6;
+  stroke-width: 2;
+  transition: fill 0.2s ease;
+}
+.map-path:hover {
+  fill: #2e3236;
+}
+.deep-level-01 {
+  fill: #e0e0e0;
+}
+.deep-level-02 {
+  fill: #ffcccc;
+}
+.deep-level-03 {
+  fill: #ff8080;
+}
+.deep-level-04 {
+  fill: #ff4d4d;
+}
+.deep-level-05 {
+  fill: #ff1919;
+}
+.deep-level-06 {
+  fill: #c50505;
+}
+.deep-level-07 {
+  fill: #800000;
+}

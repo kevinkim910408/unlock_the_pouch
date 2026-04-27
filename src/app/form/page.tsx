@@ -1,6 +1,7 @@
 "use client";
 
 import Text from "@/components/text";
+import ProgressSteps from "@/components/progress-steps";
 import { PROVINCES } from "@/lib/campaign";
 import { CampaignLanguage } from "@/types/campaign";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -21,6 +22,8 @@ type Copy = {
   back: string;
   next: string;
   error: string;
+  invalidEmail: string;
+  invalidPostalCode: string;
 };
 
 const COPY: Record<CampaignLanguage, Copy> = {
@@ -43,6 +46,8 @@ const COPY: Record<CampaignLanguage, Copy> = {
     back: "Back",
     next: "Next",
     error: "Please complete all required fields.",
+    invalidEmail: "Please enter a valid email address.",
+    invalidPostalCode: "Please enter a valid Canadian postal code (A1A 1A1).",
   },
   fr: {
     heading: "Generation de la soumission",
@@ -63,8 +68,14 @@ const COPY: Record<CampaignLanguage, Copy> = {
     back: "Retour",
     next: "Suivant",
     error: "Veuillez remplir tous les champs obligatoires.",
+    invalidEmail: "Veuillez entrer une adresse courriel valide.",
+    invalidPostalCode:
+      "Veuillez entrer un code postal canadien valide (A1A 1A1).",
   },
 };
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const POSTAL_CODE_REGEX = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/;
 
 export default function FormPage() {
   const router = useRouter();
@@ -99,16 +110,26 @@ export default function FormPage() {
       return;
     }
 
+    if (!EMAIL_REGEX.test(email.trim())) {
+      setError(t.invalidEmail);
+      return;
+    }
+
+    if (!POSTAL_CODE_REGEX.test(postalCode.trim().toUpperCase())) {
+      setError(t.invalidPostalCode);
+      return;
+    }
+
     localStorage.setItem(
       "campaign-form-info",
       JSON.stringify({
         language,
-        firstName,
-        lastName,
-        email,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
         province,
-        city,
-        postalCode,
+        city: city.trim(),
+        postalCode: postalCode.trim().toUpperCase(),
         newsletterOptIn,
       }),
     );
@@ -119,20 +140,9 @@ export default function FormPage() {
   return (
     <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]">
       <section className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-8 md:py-12">
-        <div className="grid grid-cols-1 gap-[2px] md:grid-cols-3">
-          {t.progress.map((label, idx) => (
-            <div
-              key={label}
-              className={`px-4 py-2 text-center ${idx === 0 ? "bg-[#59b0df] text-white" : "bg-[#dcdcdc] text-[#222]"}`}
-            >
-              <Text as="span" size="xs" className="font-bold">
-                {label}
-              </Text>
-            </div>
-          ))}
-        </div>
+        <ProgressSteps labels={t.progress} activeCount={1} />
 
-        <Text as="h1" size="xl" className="mt-6 font-black text-[#444]">
+        <Text as="h1" size="md" className="mt-6 font-black text-[#444]">
           {t.heading}
         </Text>
 
@@ -149,6 +159,7 @@ export default function FormPage() {
               <span className="text-red-600">*</span>
             </label>
             <input
+              maxLength={30}
               className="w-full border border-[#9d9d9d] bg-white px-2 py-2"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
@@ -167,6 +178,7 @@ export default function FormPage() {
               <span className="text-red-600">*</span>
             </label>
             <input
+              maxLength={30}
               className="w-full border border-[#9d9d9d] bg-white px-2 py-2"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
@@ -186,6 +198,7 @@ export default function FormPage() {
             </label>
             <input
               type="email"
+              maxLength={120}
               className="w-full border border-[#9d9d9d] bg-white px-2 py-2"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -246,6 +259,7 @@ export default function FormPage() {
               <span className="text-red-600">*</span>
             </label>
             <input
+              maxLength={7}
               className="w-full border border-[#9d9d9d] bg-white px-2 py-2"
               value={postalCode}
               onChange={(e) => setPostalCode(e.target.value)}

@@ -18,7 +18,7 @@ export default function SiteChrome({
   return (
     <>
       <SiteHeader />
-      <div className="flex-1">{children}</div>
+      <div className="min-h-0 flex-1">{children}</div>
       <footer className="h-12 w-full bg-[#082a4a]" />
     </>
   );

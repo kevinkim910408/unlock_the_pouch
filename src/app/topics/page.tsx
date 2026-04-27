@@ -1,6 +1,7 @@
 "use client";
 
 import Text from "@/components/text";
+import ProgressSteps from "@/components/progress-steps";
 import { CampaignLanguage } from "@/types/campaign";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -137,28 +138,14 @@ export default function TopicsPage() {
   return (
     <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]">
       <section className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-8 md:py-10">
-        <div className="grid grid-cols-1 gap-[2px] md:grid-cols-3">
-          {t.progress.map((label, idx) => {
-            const active = idx < 2;
-            return (
-              <div
-                key={label}
-                className={`px-4 py-2 text-center ${active ? "bg-[#59b0df] text-white" : "bg-[#dcdcdc] text-[#222]"}`}
-              >
-                <Text as="span" size="xs" className="font-bold">
-                  {label}
-                </Text>
-              </div>
-            );
-          })}
-        </div>
+        <ProgressSteps labels={t.progress} activeCount={2} />
 
-        <Text as="h1" size="xl" className="mt-8 font-black text-[#444]">
+        <Text as="h1" size="md" className="mt-8 font-black text-[#444]">
           {t.heading}
         </Text>
 
         <div className="mt-6">
-          <Text as="h2" size="lg" className="font-black text-[#444]">
+          <Text as="h2" size="md" className="font-black text-[#444]">
             {t.sectionOne}
           </Text>
           <div className="mt-3 space-y-2">
@@ -183,7 +170,7 @@ export default function TopicsPage() {
         </div>
 
         <div className="mt-10">
-          <Text as="h2" size="lg" className="font-black text-[#444]">
+          <Text as="h2" size="md" className="font-black text-[#444]">
             {t.sectionTwo}
           </Text>
           <div className="mt-3 space-y-2">

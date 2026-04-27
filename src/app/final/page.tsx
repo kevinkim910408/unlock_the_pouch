@@ -1,7 +1,9 @@
 "use client";
 
 import Text from "@/components/text";
+import ProgressSteps from "@/components/progress-steps";
 import { CampaignLanguage } from "@/types/campaign";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -90,15 +92,28 @@ Sincerely,
 John Doe`;
 
 function ProviderRow() {
+  const providers = [
+    { name: "GMAIL", src: "/gmail.svg" },
+    { name: "OUTLOOK", src: "/outlook.svg" },
+    { name: "YAHOO", src: "/yahoo.svg", bigger: true },
+  ];
+
   return (
     <div className="mt-3 flex flex-wrap gap-4">
-      {["GMAIL", "OUTLOOK", "YAHOO"].map((provider) => (
+      {providers.map((provider) => (
         <div
-          key={provider}
-          className="flex h-10 w-24 items-center justify-center border border-[#cfcfcf] bg-white text-[#555]"
+          key={provider.name}
+          className="flex h-14 w-28 flex-col items-center justify-center gap-1 bg-transparent text-[#555]"
         >
+          <Image
+            src={provider.src}
+            alt={provider.name}
+            width={provider.bigger ? 34 : 28}
+            height={provider.bigger ? 34 : 28}
+            className={provider.bigger ? "h-[34px] w-[34px] object-contain" : "h-7 w-7 object-contain"}
+          />
           <Text as="span" size="xs" className="font-bold">
-            {provider}
+            {provider.name}
           </Text>
         </div>
       ))}
@@ -127,9 +142,20 @@ function LetterPanel({
   copied,
   body,
 }: LetterPanelProps) {
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  async function handleCopyLetter() {
+    try {
+      await navigator.clipboard.writeText(body);
+      setCopySuccess(true);
+    } catch {
+      setCopySuccess(false);
+    }
+  }
+
   return (
     <section className="border border-[#d7d7d7] bg-[#ececec] p-4 md:p-5">
-      <Text as="h3" size="lg" className="font-black text-[#424242]">
+      <Text as="h3" size="md" className="font-black text-[#424242]">
         {title}
       </Text>
 
@@ -145,15 +171,21 @@ function LetterPanel({
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <button
           type="button"
+          onClick={handleCopyLetter}
           className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-4 py-2 uppercase text-white"
         >
           <Text as="span" size="xs" className="font-black uppercase text-white">
             {copyLetter}
           </Text>
         </button>
-        <Text as="span" size="xs" className="text-[#444]">
-          {copied} Please paste in your email.
-        </Text>
+        {copySuccess ? (
+          <div className="flex items-center gap-2">
+            <Image src="/checked.svg" alt="Copied" width={16} height={16} />
+            <Text as="span" size="xs" className="text-[#444]">
+              {copied}
+            </Text>
+          </div>
+        ) : null}
       </div>
 
       <Text as="p" size="xs" className="mt-5 font-black text-[#4fa9db]">
@@ -183,6 +215,7 @@ function LetterPanel({
 
 export default function FinalPage() {
   const router = useRouter();
+  const [physicalSent, setPhysicalSent] = useState(false);
   const [preview] = useState<PreviewData | null>(() => {
     if (typeof window === "undefined") return null;
     const raw = localStorage.getItem("campaign-preview");
@@ -204,24 +237,14 @@ export default function FinalPage() {
   return (
     <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]">
       <section className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-8 md:py-10">
-        <div className="grid grid-cols-1 gap-[2px] md:grid-cols-3">
-          {t.progress.map((label) => (
-            <div
-              key={label}
-              className="bg-[#59b0df] px-4 py-2 text-center text-white"
-            >
-              <Text as="span" size="xs" className="font-bold text-white">
-                {label}
-              </Text>
-            </div>
-          ))}
-        </div>
+        <ProgressSteps labels={t.progress} activeCount={3} />
 
         <section className="mt-5 border border-[#d7d7d7] bg-[#ececec] p-4 md:p-5">
-          <Text as="h2" size="lg" className="font-black text-[#424242]">
+          <Text as="h2" size="md" className="font-black text-[#424242]">
             {t.physicalTitle}
           </Text>
-          <div className="mt-3 border border-[#e3b3b3] bg-[#f8dcdc] px-3 py-2">
+          <div className="mt-3 flex items-start gap-2 border border-[#e3b3b3] bg-[#f8dcdc] px-3 py-2">
+            <Image src="/warning.svg" alt="Warning" width={18} height={18} />
             <Text as="p" size="xs" className="text-[#5d5d5d]">
               {t.consent}
             </Text>
@@ -229,15 +252,21 @@ export default function FinalPage() {
           <div className="mt-3 flex flex-wrap items-center gap-4">
             <button
               type="button"
+              onClick={() => setPhysicalSent(true)}
               className="inline-flex min-w-[140px] items-center justify-center bg-[#59b0df] px-4 py-2 text-white"
             >
               <Text as="span" size="xs" className="font-black text-white">
                 {t.sendPhysical}
               </Text>
             </button>
-            <Text as="p" size="xs" className="text-[#444]">
-              {t.physicalDone}
-            </Text>
+            {physicalSent ? (
+              <div className="flex items-center gap-2">
+                <Image src="/checked.svg" alt="Sent" width={16} height={16} />
+                <Text as="p" size="xs" className="text-[#444]">
+                  {t.physicalDone}
+                </Text>
+              </div>
+            ) : null}
           </div>
         </section>
 
