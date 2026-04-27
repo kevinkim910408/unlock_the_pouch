@@ -1,6 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 import SiteHeader from "@/components/site-header";
+import { Suspense } from "react";
 const CHROME_HIDDEN_PREFIXES = ["/age-verification", "/print"];
 export default function SiteChrome({
   children,
@@ -17,7 +18,9 @@ export default function SiteChrome({
 
   return (
     <>
-      <SiteHeader />
+      <Suspense fallback={null}>
+        <SiteHeader />
+      </Suspense>
       <div className="min-h-0 flex-1">{children}</div>
       <footer className="h-12 w-full bg-[#082a4a]" />
     </>

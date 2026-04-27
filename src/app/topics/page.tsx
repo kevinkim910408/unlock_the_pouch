@@ -5,7 +5,7 @@ import ProgressSteps from "@/components/progress-steps";
 import { PREMIER_EMAIL_BY_PROVINCE } from "@/lib/campaign";
 import { CampaignLanguage } from "@/types/campaign";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 const MINISTER_EMAIL_FALLBACK = "marjorie.michel@parl.gc.ca";
 
@@ -74,7 +74,7 @@ type MpLookupResponse = {
   } | null;
 };
 
-export default function TopicsPage() {
+function TopicsPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const language: CampaignLanguage =
@@ -288,5 +288,13 @@ export default function TopicsPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function TopicsPage() {
+  return (
+    <Suspense fallback={<main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]" />}>
+      <TopicsPageClient />
+    </Suspense>
   );
 }

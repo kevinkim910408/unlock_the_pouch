@@ -5,7 +5,7 @@ import ProgressSteps from "@/components/progress-steps";
 import { PROVINCES } from "@/lib/campaign";
 import { CampaignLanguage } from "@/types/campaign";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 type Copy = {
   heading: string;
@@ -77,7 +77,7 @@ const COPY: Record<CampaignLanguage, Copy> = {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const POSTAL_CODE_REGEX = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/;
 
-export default function FormPage() {
+function FormPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const language: CampaignLanguage =
@@ -314,5 +314,13 @@ export default function FormPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function FormPage() {
+  return (
+    <Suspense fallback={<main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]" />}>
+      <FormPageClient />
+    </Suspense>
   );
 }

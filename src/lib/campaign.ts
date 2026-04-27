@@ -160,7 +160,7 @@ export function validateTopicSelection(topicIds: string[]): boolean {
   if (topicIds.length !== 4) return false;
   const selectedTopics = topicIds
     .map((id) => getTopicById(id))
-    .filter((topic) => Boolean(topic));
+    .filter((topic): topic is Topic => Boolean(topic));
 
   if (selectedTopics.length !== 4) return false;
 
