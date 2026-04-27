@@ -1,7 +1,8 @@
-import { getSubmissionStats } from "@/lib/submissions";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { getSubmissionStats } from "@/lib/submissions";
+import Text from "@/components/text";
 
 const POPULATION_BY_PROVINCE: Record<string, string> = {
   ON: "16,000,000",
@@ -22,9 +23,7 @@ const POPULATION_BY_PROVINCE: Record<string, string> = {
 export default async function HomePage() {
   const cookieStore = await cookies();
   const isAgeVerified = cookieStore.get("age_verified")?.value === "true";
-  if (!isAgeVerified) {
-    redirect("/age-verification");
-  }
+  if (!isAgeVerified) redirect("/age-verification");
 
   let total = 0;
   let provinceStats: Array<{ province: string; count: number }> = [];
@@ -43,50 +42,72 @@ export default async function HomePage() {
     <main className="min-h-screen bg-[#ececec]">
       <section className="bg-[#111a2b]">
         <div className="mx-auto w-full max-w-[1200px] px-5 py-10 text-white md:px-8 md:py-14">
-          <h1 className="text-4xl font-black uppercase md:text-5xl">What Is Happening</h1>
+          <Text as="h1" size="lg" className="font-black uppercase">
+            What Is Happening
+          </Text>
           <div className="mt-3 h-1 w-28 bg-[#27a8df]" />
-          <div className="mt-4 max-w-4xl space-y-4 text-base leading-6 text-slate-100">
-            <p>
+          <div className="mt-4 max-w-4xl space-y-4 text-slate-100">
+            <Text size="sm">
               In Canada it is easier in 2024, a federal ministerial order moved
-              nicotine pouches behind the counter in pharmacies, making them harder
-              for adult Canadians to access, while cigarettes remain widely available.
-            </p>
-            <p>
-              For many adults, nicotine pouches are not a starting point. They are part
-              of a transition away from smoking. Restricting access creates confusion,
-              inconsistency, and real barriers for people trying to make a change.
-            </p>
-            <p>
-              This campaign is grounded in a simple principle: adult Canadians deserve
-              reasonable, regulated access to lower-risk alternatives.
-            </p>
+              nicotine pouches behind the counter in pharmacies, making them
+              harder for adult Canadians to access, while cigarettes remain
+              widely available.
+            </Text>
+            <Text size="sm">
+              For many adults, nicotine pouches are not a starting point. They
+              are part of a transition away from smoking. Restricting access
+              creates confusion, inconsistency, and real barriers for people
+              trying to make a change.
+            </Text>
+            <Text size="sm">
+              This campaign is grounded in a simple principle: adult Canadians
+              deserve reasonable, regulated access to lower-risk alternatives.
+            </Text>
           </div>
-          <h2 className="mt-10 text-4xl font-black uppercase md:text-5xl">
+
+          <Text as="h2" size="lg" className="mt-10 font-black uppercase">
             How To Participate
-          </h2>
+          </Text>
           <div className="mt-3 h-1 w-28 bg-[#27a8df]" />
-          <p className="mt-4 max-w-4xl text-base leading-6 text-slate-100">
-            We created a tool to help you create a personalized letter to send to your MP
-            and the Minister of Health. Once done, you can also send a note to your Premier.
-          </p>
+          <Text size="sm" className="mt-4 max-w-4xl text-slate-100">
+            We created a tool to help you create a personalized letter to send
+            to your MP and the Minister of Health. Once done, you can also send
+            a note to your Premier.
+          </Text>
 
           <div className="mt-8 flex flex-wrap gap-6">
             <div>
-              <p className="mb-2 text-sm font-bold uppercase">Write to the Government</p>
+              <Text as="p" size="xs" className="mb-2 font-bold uppercase">
+                Write to the Government
+              </Text>
               <Link
                 href="/terms?lang=en"
-                className="inline-flex w-[240px] items-center justify-center bg-[#2caee5] px-8 py-2 text-3xl font-black uppercase text-white hover:bg-[#159bd2] md:text-4xl"
+                className="inline-flex w-[240px] items-center justify-center bg-[#2caee5] px-8 py-2 font-black uppercase text-white hover:bg-[#159bd2]"
               >
-                English
+                <Text
+                  as="span"
+                  size="lg"
+                  className="font-black uppercase text-white"
+                >
+                  English
+                </Text>
               </Link>
             </div>
             <div>
-              <p className="mb-2 text-sm font-bold uppercase">Ecrivez au Gouvernement</p>
+              <Text as="p" size="xs" className="mb-2 font-bold uppercase">
+                Ecrivez au Gouvernement
+              </Text>
               <Link
                 href="/terms?lang=fr"
-                className="inline-flex w-[240px] items-center justify-center bg-[#2caee5] px-8 py-2 text-3xl font-black uppercase text-white hover:bg-[#159bd2] md:text-4xl"
+                className="inline-flex w-[240px] items-center justify-center bg-[#2caee5] px-8 py-2 font-black uppercase text-white hover:bg-[#159bd2]"
               >
-                Francais
+                <Text
+                  as="span"
+                  size="lg"
+                  className="font-black uppercase text-white"
+                >
+                  Francais
+                </Text>
               </Link>
             </div>
           </div>
@@ -96,97 +117,187 @@ export default async function HomePage() {
       <section className="mx-auto grid w-full max-w-[1200px] gap-0 px-5 py-10 md:grid-cols-3 md:px-8">
         <div className="flex min-h-[280px] items-center justify-center border border-[#dddddd] bg-[#efefef] p-6 text-center">
           <div>
-            <p className="text-6xl font-black text-[#1da8df] md:text-7xl">
+            <Text as="p" size="xl" className="font-black text-[#1da8df]">
               {total.toLocaleString()}
-            </p>
-            <p className="mt-3 text-3xl font-black uppercase text-[#444] md:text-4xl">
+            </Text>
+            <Text
+              as="p"
+              size="lg"
+              className="mt-3 font-black uppercase text-[#444]"
+            >
               Letters Sent
-            </p>
-            <p className="text-3xl font-black uppercase text-[#444] md:text-4xl">
+            </Text>
+            <Text as="p" size="lg" className="font-black uppercase text-[#444]">
               Lettres Envoyees
-            </p>
+            </Text>
           </div>
         </div>
+
         <div className="flex min-h-[280px] items-center justify-center border border-[#dddddd] bg-[#f4f4f4] p-6">
           <div className="space-y-3 text-center">
-            <p className="text-base font-extrabold uppercase text-[#3b3b3b] md:text-lg">
+            <Text
+              as="p"
+              size="sm"
+              className="font-extrabold uppercase text-[#3b3b3b]"
+            >
               1 Create a letter with our tool to send to the government
-            </p>
-            <p className="text-base font-extrabold uppercase text-[#3b3b3b] md:text-lg">
+            </Text>
+            <Text
+              as="p"
+              size="sm"
+              className="font-extrabold uppercase text-[#3b3b3b]"
+            >
               2 Review and approve
-            </p>
-            <p className="text-base font-extrabold uppercase text-[#3b3b3b] md:text-lg">
+            </Text>
+            <Text
+              as="p"
+              size="sm"
+              className="font-extrabold uppercase text-[#3b3b3b]"
+            >
               3 We will mail your letter to the government
-            </p>
+            </Text>
           </div>
         </div>
+
         <div className="flex min-h-[280px] items-center justify-center border border-[#dddddd] bg-[#efefef] p-6">
           <div>
-            <p className="text-5xl font-black uppercase leading-[0.9] text-[#1da8df] md:text-6xl">
+            <Text
+              as="p"
+              size="xl"
+              className="font-black uppercase leading-[0.9] text-[#1da8df]"
+            >
               Thank You
               <br />
               Merci
-            </p>
-            <p className="mt-5 text-3xl font-black uppercase leading-tight text-[#3f3f3f] md:text-4xl">
+            </Text>
+            <Text
+              as="p"
+              size="lg"
+              className="mt-5 font-black uppercase leading-tight text-[#3f3f3f]"
+            >
               Our collective voice will be heard
-            </p>
+            </Text>
           </div>
         </div>
       </section>
 
       <section className="mx-auto w-full max-w-[1200px] px-5 pb-12 md:px-8">
         <div className="flex flex-wrap gap-1">
-          <button className="bg-[#dddddd] px-4 py-2 text-sm font-bold uppercase text-[#444]">
-            Submissions
+          <button className="bg-[#dddddd] px-4 py-2 font-bold uppercase text-[#444]">
+            <Text
+              as="span"
+              size="xs"
+              className="font-bold uppercase text-[#444]"
+            >
+              Submissions
+            </Text>
           </button>
-          <button className="bg-[#1da8df] px-4 py-2 text-sm font-bold uppercase text-white">
-            Submissions vs Population
+          <button className="bg-[#1da8df] px-4 py-2 font-bold uppercase text-white">
+            <Text
+              as="span"
+              size="xs"
+              className="font-bold uppercase text-white"
+            >
+              Submissions vs Population
+            </Text>
           </button>
         </div>
 
         <div className="mt-8 grid gap-8 md:grid-cols-2">
           <div>
-            <h3 className="text-4xl font-black uppercase text-[#3b3b3b]">
+            <Text
+              as="h3"
+              size="lg"
+              className="font-black uppercase text-[#3b3b3b]"
+            >
               Submissions vs Population
-            </h3>
-            <p className="text-4xl font-black uppercase text-[#3b3b3b]">
+            </Text>
+            <Text
+              as="p"
+              size="lg"
+              className="font-black uppercase text-[#3b3b3b]"
+            >
               Soumissions vs Population
-            </p>
-            <table className="mt-5 w-full text-left text-sm">
+            </Text>
+
+            <table className="mt-5 w-full text-left">
               <thead>
                 <tr className="border-b border-[#d5d5d5] text-[#666]">
-                  <th className="py-2 pr-2">Province</th>
-                  <th className="py-2 pr-2">Rank</th>
-                  <th className="py-2 pr-2">Submissions</th>
-                  <th className="py-2">Population*</th>
+                  <th className="py-2 pr-2">
+                    <Text as="span" size="xs">
+                      Province
+                    </Text>
+                  </th>
+                  <th className="py-2 pr-2">
+                    <Text as="span" size="xs">
+                      Rank
+                    </Text>
+                  </th>
+                  <th className="py-2 pr-2">
+                    <Text as="span" size="xs">
+                      Submissions
+                    </Text>
+                  </th>
+                  <th className="py-2">
+                    <Text as="span" size="xs">
+                      Population*
+                    </Text>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {orderedRows.map((row, index) => (
                   <tr key={row.province} className="border-b border-[#e2e2e2]">
-                    <td className="py-2 pr-2 font-semibold">{row.province}</td>
-                    <td className="py-2 pr-2">{index + 1}</td>
-                    <td className="py-2 pr-2">{row.count}</td>
+                    <td className="py-2 pr-2">
+                      <Text as="span" size="xs" className="font-semibold">
+                        {row.province}
+                      </Text>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <Text as="span" size="xs">
+                        {index + 1}
+                      </Text>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <Text as="span" size="xs">
+                        {row.count}
+                      </Text>
+                    </td>
                     <td className="py-2">
-                      {POPULATION_BY_PROVINCE[row.province] ?? "-"}
+                      <Text as="span" size="xs">
+                        {POPULATION_BY_PROVINCE[row.province] ?? "-"}
+                      </Text>
                     </td>
                   </tr>
                 ))}
                 {orderedRows.length === 0 ? (
                   <tr>
                     <td className="py-3 text-[#666]" colSpan={4}>
-                      No submissions yet.
+                      <Text as="span" size="xs">
+                        No submissions yet.
+                      </Text>
                     </td>
                   </tr>
                 ) : null}
               </tbody>
             </table>
-            <p className="mt-2 text-xs text-[#777]">*based on 2024 stat can population</p>
+            <Text as="p" size="xs" className="mt-2 text-[#777]">
+              *based on 2024 stat can population
+            </Text>
           </div>
+
           <div className="flex min-h-[360px] items-center justify-center bg-[#d9d9d9]">
             <div className="text-center">
-              <p className="text-xl font-bold uppercase text-[#666]">Canada Map</p>
-              <p className="text-sm text-[#777]">Placeholder</p>
+              <Text
+                as="p"
+                size="md"
+                className="font-bold uppercase text-[#666]"
+              >
+                Canada Map
+              </Text>
+              <Text as="p" size="xs" className="text-[#777]">
+                Placeholder
+              </Text>
             </div>
           </div>
         </div>

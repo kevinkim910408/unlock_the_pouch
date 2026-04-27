@@ -1,9 +1,13 @@
 import CampaignShell from "@/components/campaign-shell";
+import Text from "@/components/text";
 import { getRecentSubmissions } from "@/lib/submissions";
 
 export const dynamic = "force-dynamic";
 
-type GroupedByMp = Record<string, Array<{ name: string; body: string; createdAt: Date }>>;
+type GroupedByMp = Record<
+  string,
+  Array<{ name: string; body: string; createdAt: Date }>
+>;
 
 export default async function PrintPage() {
   let submissions = await getRecentSubmissions(500).catch(() => []);
@@ -35,39 +39,55 @@ export default async function PrintPage() {
       subtitle="Every submission creates 2 letters: one for Minister of Health, one for MP."
     >
       <section>
-        <h2 className="text-lg font-semibold text-slate-900">
+        <Text as="h2" size="sm" className="font-semibold text-slate-900">
           Minister of Health Print Section ({ministerLetters.length})
-        </h2>
+        </Text>
         <div className="mt-4 space-y-4">
           {ministerLetters.map((letter, index) => (
-            <div key={`${letter.name}-${index}`} className="rounded-xl border border-slate-200 p-4">
-              <div className="mb-2 text-xs text-slate-500">
+            <div
+              key={`${letter.name}-${index}`}
+              className="rounded-xl border border-slate-200 p-4"
+            >
+              <Text as="div" size="xs" className="mb-2 text-slate-500">
                 {letter.name} | {new Date(letter.createdAt).toLocaleString()}
-              </div>
-              <pre className="whitespace-pre-wrap text-xs text-slate-800">{letter.body}</pre>
+              </Text>
+              <pre className="whitespace-pre-wrap t-5 text-slate-800">
+                {letter.body}
+              </pre>
             </div>
           ))}
           {ministerLetters.length === 0 ? (
-            <p className="text-sm text-slate-600">No letters available yet.</p>
+            <Text as="p" size="xs" className="text-slate-600">
+              No letters available yet.
+            </Text>
           ) : null}
         </div>
       </section>
 
       <section className="mt-10">
-        <h2 className="text-lg font-semibold text-slate-900">MP Print Sections</h2>
+        <Text as="h2" size="sm" className="font-semibold text-slate-900">
+          MP Print Sections
+        </Text>
         <div className="mt-4 space-y-6">
           {Object.entries(mpGrouped).map(([mpEmail, letters]) => (
-            <div key={mpEmail} className="rounded-2xl border border-slate-200 p-4">
-              <h3 className="text-sm font-semibold text-slate-800">
+            <div
+              key={mpEmail}
+              className="rounded-2xl border border-slate-200 p-4"
+            >
+              <Text as="h3" size="xs" className="font-semibold text-slate-800">
                 {mpEmail} ({letters.length})
-              </h3>
+              </Text>
               <div className="mt-3 space-y-3">
                 {letters.map((letter, index) => (
-                  <div key={`${letter.name}-${index}`} className="rounded-xl bg-slate-50 p-3">
-                    <div className="mb-2 text-xs text-slate-500">
-                      {letter.name} | {new Date(letter.createdAt).toLocaleString()}
-                    </div>
-                    <pre className="whitespace-pre-wrap text-xs text-slate-800">
+                  <div
+                    key={`${letter.name}-${index}`}
+                    className="rounded-xl bg-slate-50 p-3"
+                  >
+                    <Text as="div" size="xs" className="mb-2 text-slate-500">
+                      {letter.name} |{" "}
+                      {new Date(letter.createdAt).toLocaleString()}
+                    </Text>
+                    <pre className="whitespace-pre-wrap t-5 text-slate-800">
                       {letter.body}
                     </pre>
                   </div>
@@ -76,9 +96,9 @@ export default async function PrintPage() {
             </div>
           ))}
           {Object.keys(mpGrouped).length === 0 ? (
-            <p className="text-sm text-slate-600">
+            <Text as="p" size="xs" className="text-slate-600">
               No MP copies selected yet.
-            </p>
+            </Text>
           ) : null}
         </div>
       </section>

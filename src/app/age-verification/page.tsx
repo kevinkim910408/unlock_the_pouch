@@ -1,46 +1,68 @@
+import Text from "@/components/text";
+import Image from "next/image";
+
 export default function AgeVerificationPage() {
   return (
     <main className="min-h-screen w-full bg-[#111316]">
       <section className="mx-auto flex min-h-screen w-full max-w-[1536px] items-center px-6 py-10 sm:px-10 md:px-20 lg:px-28">
         <div className="w-full max-w-[900px]">
-          <div className="h-16 w-56 bg-[#d7322d] sm:h-20 sm:w-72 md:h-24 md:w-80" />
-
-          <p className="mt-8 font-['Trebuchet_MS'] text-[56px] font-black uppercase leading-[0.92] tracking-tight text-[#67b8e6] sm:text-[74px] md:text-[112px]">
-            Unlock the
-            <br />
-            Pouch
-          </p>
-
-          <p className="mt-4 font-['Trebuchet_MS'] text-[32px] font-black uppercase leading-none text-white sm:text-[46px] md:text-[62px]">
-            Déverrouillez la
-            <br />
-            Pochette
-          </p>
-
-          <p className="mt-10 font-['Trebuchet_MS'] text-[34px] font-extrabold uppercase leading-[1.02] text-white sm:text-[40px] md:text-[52px]">
-            Age Verification
-            <br />
-            Vérification de l&apos;âge
-          </p>
-
-          <p className="mt-8 font-['Trebuchet_MS'] text-[16px] uppercase leading-[1.25] text-white sm:text-[24px] md:text-[40px]">
-            You must be at least 18+ to enter this site
-            <br />
-            Vous devez avoir au moins 18 ans pour entrer sur ce site
-          </p>
-
+          <div className="relative h-16 w-56 sm:h-20 sm:w-72 md:h-24 md:w-80">
+            <Image
+              src="/Logo.svg"
+              alt="Logo"
+              fill
+              className="object-contain object-left"
+            />
+          </div>
+          <Text
+            as="p"
+            size="xl"
+            className="mt-8 font-black uppercase tracking-tight text-[#67b8e6]"
+          >
+            Unlock the <br /> Pouch
+          </Text>
+          <Text
+            as="p"
+            size="md"
+            className="mt-4 font-black uppercase text-white"
+          >
+            Déverrouillez la Pochette
+          </Text>
+          <Text
+            as="p"
+            size="md"
+            className="mt-10 font-extrabold uppercase text-white"
+          >
+            Age Verification <br /> Vérification de l&apos;âge
+          </Text>
+          <Text as="p" size="sm" className="mt-8 uppercase text-white">
+            You must be at least 18+ to enter this site <br /> Vous devez avoir
+            au moins 18 ans pour entrer sur ce site
+          </Text>
           <div className="mt-10 flex flex-wrap gap-5">
             <a
               href="https://www.google.com"
-              className="inline-flex min-w-[210px] items-center justify-center bg-[#67b8e6] px-8 py-2 text-base font-bold uppercase tracking-wide text-white transition hover:bg-[#59aad9]"
+              className="t-4 inline-flex min-w-[210px] items-center justify-center bg-[#67b8e6] px-8 py-2 font-bold uppercase tracking-wide text-white transition hover:bg-[#59aad9]"
             >
-              Leave / Partir
+              <Text
+                as="span"
+                size="sm"
+                className="font-bold uppercase tracking-wide text-white"
+              >
+                Leave / Partir
+              </Text>
             </a>
             <a
               href="/api/age-verify"
-              className="inline-flex min-w-[210px] items-center justify-center bg-[#67b8e6] px-8 py-2 text-base font-bold uppercase tracking-wide text-white transition hover:bg-[#59aad9]"
+              className="t-4 inline-flex min-w-[210px] items-center justify-center bg-[#67b8e6] px-8 py-2 font-bold uppercase tracking-wide text-white transition hover:bg-[#59aad9]"
             >
-              Enter / Entrer
+              <Text
+                as="span"
+                size="sm"
+                className="font-bold uppercase tracking-wide text-white"
+              >
+                Enter / Entrer
+              </Text>
             </a>
           </div>
         </div>

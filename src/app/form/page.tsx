@@ -1,5 +1,6 @@
 "use client";
 
+import Text from "@/components/text";
 import { PROVINCES } from "@/lib/campaign";
 import { CampaignLanguage } from "@/types/campaign";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -25,7 +26,11 @@ type Copy = {
 const COPY: Record<CampaignLanguage, Copy> = {
   en: {
     heading: "Generating Submission",
-    progress: ["Step 1 - Your info", "Step 2 - Choose Topics", "Step 3 - Send the letter"],
+    progress: [
+      "Step 1 - Your info",
+      "Step 2 - Choose Topics",
+      "Step 3 - Send the letter",
+    ],
     labels: {
       firstName: "First Name",
       lastName: "Last Name",
@@ -41,7 +46,11 @@ const COPY: Record<CampaignLanguage, Copy> = {
   },
   fr: {
     heading: "Generation de la soumission",
-    progress: ["Etape 1 - Vos infos", "Etape 2 - Choisir les sujets", "Etape 3 - Envoyer la lettre"],
+    progress: [
+      "Etape 1 - Vos infos",
+      "Etape 2 - Choisir les sujets",
+      "Etape 3 - Envoyer la lettre",
+    ],
     labels: {
       firstName: "Prenom",
       lastName: "Nom",
@@ -60,7 +69,8 @@ const COPY: Record<CampaignLanguage, Copy> = {
 export default function FormPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const language: CampaignLanguage = searchParams.get("lang") === "fr" ? "fr" : "en";
+  const language: CampaignLanguage =
+    searchParams.get("lang") === "fr" ? "fr" : "en";
   const t = COPY[language];
 
   const [firstName, setFirstName] = useState("");
@@ -113,21 +123,30 @@ export default function FormPage() {
           {t.progress.map((label, idx) => (
             <div
               key={label}
-              className={`px-4 py-2 text-center text-sm font-bold ${
-                idx === 0 ? "bg-[#59b0df] text-white" : "bg-[#dcdcdc] text-[#222]"
-              }`}
+              className={`px-4 py-2 text-center ${idx === 0 ? "bg-[#59b0df] text-white" : "bg-[#dcdcdc] text-[#222]"}`}
             >
-              {label}
+              <Text as="span" size="xs" className="font-bold">
+                {label}
+              </Text>
             </div>
           ))}
         </div>
 
-        <h1 className="mt-6 text-5xl font-black text-[#444] md:text-6xl">{t.heading}</h1>
+        <Text as="h1" size="xl" className="mt-6 font-black text-[#444]">
+          {t.heading}
+        </Text>
 
         <div className="mt-6 grid gap-4 md:grid-cols-12">
           <div className="md:col-span-3">
-            <label className="mb-1 block text-sm font-semibold text-[#2d2d2d]">
-              {t.labels.firstName} <span className="text-red-600">*</span>
+            <label className="mb-1 block font-semibold text-[#2d2d2d]">
+              <Text
+                as="span"
+                size="xs"
+                className="font-semibold text-[#2d2d2d]"
+              >
+                {t.labels.firstName}
+              </Text>{" "}
+              <span className="text-red-600">*</span>
             </label>
             <input
               className="w-full border border-[#9d9d9d] bg-white px-2 py-2"
@@ -135,9 +154,17 @@ export default function FormPage() {
               onChange={(e) => setFirstName(e.target.value)}
             />
           </div>
+
           <div className="md:col-span-3">
-            <label className="mb-1 block text-sm font-semibold text-[#2d2d2d]">
-              {t.labels.lastName} <span className="text-red-600">*</span>
+            <label className="mb-1 block font-semibold text-[#2d2d2d]">
+              <Text
+                as="span"
+                size="xs"
+                className="font-semibold text-[#2d2d2d]"
+              >
+                {t.labels.lastName}
+              </Text>{" "}
+              <span className="text-red-600">*</span>
             </label>
             <input
               className="w-full border border-[#9d9d9d] bg-white px-2 py-2"
@@ -145,9 +172,17 @@ export default function FormPage() {
               onChange={(e) => setLastName(e.target.value)}
             />
           </div>
+
           <div className="md:col-span-5">
-            <label className="mb-1 block text-sm font-semibold text-[#2d2d2d]">
-              {t.labels.email} <span className="text-red-600">*</span>
+            <label className="mb-1 block font-semibold text-[#2d2d2d]">
+              <Text
+                as="span"
+                size="xs"
+                className="font-semibold text-[#2d2d2d]"
+              >
+                {t.labels.email}
+              </Text>{" "}
+              <span className="text-red-600">*</span>
             </label>
             <input
               type="email"
@@ -156,9 +191,17 @@ export default function FormPage() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+
           <div className="md:col-span-4">
-            <label className="mb-1 block text-sm font-semibold text-[#2d2d2d]">
-              {t.labels.province} <span className="text-red-600">*</span>
+            <label className="mb-1 block font-semibold text-[#2d2d2d]">
+              <Text
+                as="span"
+                size="xs"
+                className="font-semibold text-[#2d2d2d]"
+              >
+                {t.labels.province}
+              </Text>{" "}
+              <span className="text-red-600">*</span>
             </label>
             <select
               className="w-full border border-[#9d9d9d] bg-white px-2 py-2"
@@ -172,9 +215,17 @@ export default function FormPage() {
               ))}
             </select>
           </div>
+
           <div className="md:col-span-3">
-            <label className="mb-1 block text-sm font-semibold text-[#2d2d2d]">
-              {t.labels.city} <span className="text-red-600">*</span>
+            <label className="mb-1 block font-semibold text-[#2d2d2d]">
+              <Text
+                as="span"
+                size="xs"
+                className="font-semibold text-[#2d2d2d]"
+              >
+                {t.labels.city}
+              </Text>{" "}
+              <span className="text-red-600">*</span>
             </label>
             <input
               className="w-full border border-[#9d9d9d] bg-white px-2 py-2"
@@ -182,9 +233,17 @@ export default function FormPage() {
               onChange={(e) => setCity(e.target.value)}
             />
           </div>
+
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-semibold text-[#2d2d2d]">
-              {t.labels.postalCode} <span className="text-red-600">*</span>
+            <label className="mb-1 block font-semibold text-[#2d2d2d]">
+              <Text
+                as="span"
+                size="xs"
+                className="font-semibold text-[#2d2d2d]"
+              >
+                {t.labels.postalCode}
+              </Text>{" "}
+              <span className="text-red-600">*</span>
             </label>
             <input
               className="w-full border border-[#9d9d9d] bg-white px-2 py-2"
@@ -194,31 +253,49 @@ export default function FormPage() {
           </div>
         </div>
 
-        <label className="mt-8 flex items-center gap-2 text-base font-semibold text-[#2d2d2d]">
+        <label className="mt-8 flex items-center gap-2 font-semibold text-[#2d2d2d]">
           <input
             type="checkbox"
             checked={newsletterOptIn}
             onChange={(e) => setNewsletterOptIn(e.target.checked)}
           />
-          {t.labels.newsletter}
+          <Text as="span" size="sm" className="font-semibold text-[#2d2d2d]">
+            {t.labels.newsletter}
+          </Text>
         </label>
 
-        {error ? <p className="mt-4 text-sm font-semibold text-red-600">{error}</p> : null}
+        {error ? (
+          <Text as="p" size="xs" className="mt-4 font-semibold text-red-600">
+            {error}
+          </Text>
+        ) : null}
 
         <div className="mt-8 flex gap-3">
           <button
             type="button"
             onClick={handleBack}
-            className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 text-sm font-black uppercase text-white hover:bg-[#4aa2d2]"
+            className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 uppercase text-white hover:bg-[#4aa2d2]"
           >
-            {t.back}
+            <Text
+              as="span"
+              size="xs"
+              className="font-black uppercase text-white"
+            >
+              {t.back}
+            </Text>
           </button>
           <button
             type="button"
             onClick={handleNext}
-            className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 text-sm font-black uppercase text-white hover:bg-[#4aa2d2]"
+            className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 uppercase text-white hover:bg-[#4aa2d2]"
           >
-            {t.next}
+            <Text
+              as="span"
+              size="xs"
+              className="font-black uppercase text-white"
+            >
+              {t.next}
+            </Text>
           </button>
         </div>
       </section>

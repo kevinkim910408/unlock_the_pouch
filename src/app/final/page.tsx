@@ -1,5 +1,6 @@
 "use client";
 
+import Text from "@/components/text";
 import { CampaignLanguage } from "@/types/campaign";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -31,7 +32,11 @@ type Copy = {
 
 const COPY: Record<CampaignLanguage, Copy> = {
   en: {
-    progress: ["STEP 1 - Your info", "STEP 2 - Choose Topics", "STEP 3 - Send the Letter"],
+    progress: [
+      "STEP 1 - Your info",
+      "STEP 2 - Choose Topics",
+      "STEP 3 - Send the Letter",
+    ],
     physicalTitle: "Physical Letter Submission",
     consent:
       "By submitting this form, you authorize us to mail your letter to the government.",
@@ -48,13 +53,18 @@ const COPY: Record<CampaignLanguage, Copy> = {
     complete: "Complete",
   },
   fr: {
-    progress: ["ETAPE 1 - Vos infos", "ETAPE 2 - Choisir les sujets", "ETAPE 3 - Envoyer la lettre"],
+    progress: [
+      "ETAPE 1 - Vos infos",
+      "ETAPE 2 - Choisir les sujets",
+      "ETAPE 3 - Envoyer la lettre",
+    ],
     physicalTitle: "Soumission de lettre physique",
     consent:
       "En soumettant ce formulaire, vous nous autorisez a poster votre lettre au gouvernement.",
     sendPhysical: "Envoyer la lettre physique",
     physicalDone: "Merci! Votre lettre sera postee au gouvernement.",
-    digitalTitle: "Envoyer une copie numerique de votre lettre au gouvernement :",
+    digitalTitle:
+      "Envoyer une copie numerique de votre lettre au gouvernement :",
     premierTitle: "Envoyer une lettre a votre premier ministre provincial",
     step1: "ETAPE 1",
     step2: "ETAPE 2",
@@ -74,7 +84,7 @@ Ottawa, Ontario A1B 2C3
 
 Dear Minister,
 
-I am writing to share my concerns and priorities. Adults in Canada deserve reasonable access to lower-risk alternatives, and policy should reflect real-world impact.
+I am writing to share my concerns and priorities.
 
 Sincerely,
 John Doe`;
@@ -82,15 +92,16 @@ John Doe`;
 function ProviderRow() {
   return (
     <div className="mt-3 flex flex-wrap gap-4">
-      <div className="flex h-10 w-24 items-center justify-center border border-[#cfcfcf] bg-white text-xs font-bold text-[#555]">
-        GMAIL
-      </div>
-      <div className="flex h-10 w-24 items-center justify-center border border-[#cfcfcf] bg-white text-xs font-bold text-[#555]">
-        OUTLOOK
-      </div>
-      <div className="flex h-10 w-24 items-center justify-center border border-[#cfcfcf] bg-white text-xs font-bold text-[#555]">
-        YAHOO
-      </div>
+      {["GMAIL", "OUTLOOK", "YAHOO"].map((provider) => (
+        <div
+          key={provider}
+          className="flex h-10 w-24 items-center justify-center border border-[#cfcfcf] bg-white text-[#555]"
+        >
+          <Text as="span" size="xs" className="font-bold">
+            {provider}
+          </Text>
+        </div>
+      ))}
     </div>
   );
 }
@@ -118,33 +129,54 @@ function LetterPanel({
 }: LetterPanelProps) {
   return (
     <section className="border border-[#d7d7d7] bg-[#ececec] p-4 md:p-5">
-      <h3 className="text-[36px] font-black text-[#424242] md:text-[42px]">{title}</h3>
+      <Text as="h3" size="lg" className="font-black text-[#424242]">
+        {title}
+      </Text>
 
-      <p className="mt-4 text-sm font-black text-[#4fa9db]">{step1}</p>
+      <Text as="p" size="xs" className="mt-4 font-black text-[#4fa9db]">
+        {step1}
+      </Text>
       <div className="mt-2 border border-[#b9b9b9] bg-white p-3">
-        <pre className="max-h-[260px] overflow-y-auto whitespace-pre-wrap text-xs leading-5 text-[#333]">
+        <pre className="max-h-[260px] overflow-y-auto whitespace-pre-wrap t-5 leading-5 text-[#333]">
           {body}
         </pre>
       </div>
+
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-4 py-2 text-xs font-black uppercase text-white"
+          className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-4 py-2 uppercase text-white"
         >
-          {copyLetter}
+          <Text as="span" size="xs" className="font-black uppercase text-white">
+            {copyLetter}
+          </Text>
         </button>
-        <span className="text-xs text-[#444]">{copied} Please paste in your email.</span>
+        <Text as="span" size="xs" className="text-[#444]">
+          {copied} Please paste in your email.
+        </Text>
       </div>
 
-      <p className="mt-5 text-sm font-black text-[#4fa9db]">{step2}</p>
-      <p className="mt-2 text-xs text-[#444]">Please select your email provider.</p>
+      <Text as="p" size="xs" className="mt-5 font-black text-[#4fa9db]">
+        {step2}
+      </Text>
+      <Text as="p" size="xs" className="mt-2 text-[#444]">
+        Please select your email provider.
+      </Text>
       <ProviderRow />
 
-      <p className="mt-5 text-sm font-black text-[#4fa9db]">{step3}</p>
-      <p className="mt-2 text-xs text-[#444]">Paste the letter into the body of the email.</p>
+      <Text as="p" size="xs" className="mt-5 font-black text-[#4fa9db]">
+        {step3}
+      </Text>
+      <Text as="p" size="xs" className="mt-2 text-[#444]">
+        Paste the letter into the body of the email.
+      </Text>
 
-      <p className="mt-4 text-sm font-black text-[#4fa9db]">{step4}</p>
-      <p className="mt-2 text-xs text-[#444]">Press send to submit the letter.</p>
+      <Text as="p" size="xs" className="mt-4 font-black text-[#4fa9db]">
+        {step4}
+      </Text>
+      <Text as="p" size="xs" className="mt-2 text-[#444]">
+        Press send to submit the letter.
+      </Text>
     </section>
   );
 }
@@ -164,8 +196,10 @@ export default function FinalPage() {
 
   const language: CampaignLanguage = preview?.language === "fr" ? "fr" : "en";
   const t = COPY[language];
-
-  const letterBody = useMemo(() => preview?.letterBody ?? SAMPLE_LETTER, [preview]);
+  const letterBody = useMemo(
+    () => preview?.letterBody ?? SAMPLE_LETTER,
+    [preview],
+  );
 
   return (
     <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]">
@@ -174,28 +208,36 @@ export default function FinalPage() {
           {t.progress.map((label) => (
             <div
               key={label}
-              className="bg-[#59b0df] px-4 py-2 text-center text-sm font-bold text-white"
+              className="bg-[#59b0df] px-4 py-2 text-center text-white"
             >
-              {label}
+              <Text as="span" size="xs" className="font-bold text-white">
+                {label}
+              </Text>
             </div>
           ))}
         </div>
 
         <section className="mt-5 border border-[#d7d7d7] bg-[#ececec] p-4 md:p-5">
-          <h2 className="text-[36px] font-black text-[#424242] md:text-[44px]">
+          <Text as="h2" size="lg" className="font-black text-[#424242]">
             {t.physicalTitle}
-          </h2>
-          <div className="mt-3 border border-[#e3b3b3] bg-[#f8dcdc] px-3 py-2 text-xs text-[#5d5d5d]">
-            {t.consent}
+          </Text>
+          <div className="mt-3 border border-[#e3b3b3] bg-[#f8dcdc] px-3 py-2">
+            <Text as="p" size="xs" className="text-[#5d5d5d]">
+              {t.consent}
+            </Text>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-4">
             <button
               type="button"
-              className="inline-flex min-w-[140px] items-center justify-center bg-[#59b0df] px-4 py-2 text-xs font-black text-white"
+              className="inline-flex min-w-[140px] items-center justify-center bg-[#59b0df] px-4 py-2 text-white"
             >
-              {t.sendPhysical}
+              <Text as="span" size="xs" className="font-black text-white">
+                {t.sendPhysical}
+              </Text>
             </button>
-            <p className="text-xs text-[#444]">{t.physicalDone}</p>
+            <Text as="p" size="xs" className="text-[#444]">
+              {t.physicalDone}
+            </Text>
           </div>
         </section>
 
@@ -229,9 +271,11 @@ export default function FinalPage() {
           <button
             type="button"
             onClick={() => router.push("/thank-you")}
-            className="inline-flex min-w-[120px] items-center justify-center bg-[#59b0df] px-5 py-2 text-sm font-black text-white"
+            className="inline-flex min-w-[120px] items-center justify-center bg-[#59b0df] px-5 py-2 text-white"
           >
-            {t.complete}
+            <Text as="span" size="xs" className="font-black text-white">
+              {t.complete}
+            </Text>
           </button>
         </div>
       </section>

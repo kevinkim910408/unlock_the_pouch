@@ -1,5 +1,6 @@
 "use client";
 
+import Text from "@/components/text";
 import { CampaignLanguage } from "@/types/campaign";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -18,7 +19,11 @@ type Copy = {
 
 const COPY: Record<CampaignLanguage, Copy> = {
   en: {
-    progress: ["STEP 1 - Your info", "STEP 2 - Choose Topics", "STEP 3 - Send the letter"],
+    progress: [
+      "STEP 1 - Your info",
+      "STEP 2 - Choose Topics",
+      "STEP 3 - Send the letter",
+    ],
     heading: "Please choose the topics below",
     sectionOne: "Why is this important to you? (Pick 2)",
     sectionTwo: "What do you want? (Pick 2)",
@@ -27,7 +32,11 @@ const COPY: Record<CampaignLanguage, Copy> = {
     error: "Please select 2 topics from each section.",
   },
   fr: {
-    progress: ["ETAPE 1 - Vos infos", "ETAPE 2 - Choisir les sujets", "ETAPE 3 - Envoyer la lettre"],
+    progress: [
+      "ETAPE 1 - Vos infos",
+      "ETAPE 2 - Choisir les sujets",
+      "ETAPE 3 - Envoyer la lettre",
+    ],
     heading: "Veuillez choisir les sujets ci-dessous",
     sectionOne: "Pourquoi est-ce important pour vous? (Choisissez 2)",
     sectionTwo: "Que voulez-vous? (Choisissez 2)",
@@ -37,20 +46,39 @@ const COPY: Record<CampaignLanguage, Copy> = {
   },
 };
 
-const SECTION_ONE = ["Topic 1", "Topic 2", "Topic 3", "Topic 4", "Topic 5", "Topic 6"];
-const SECTION_TWO = ["Topic 1", "Topic 2", "Topic 3", "Topic 4", "Topic 5", "Topic 6"];
+const SECTION_ONE = [
+  "Topic 1",
+  "Topic 2",
+  "Topic 3",
+  "Topic 4",
+  "Topic 5",
+  "Topic 6",
+];
+const SECTION_TWO = [
+  "Topic 1",
+  "Topic 2",
+  "Topic 3",
+  "Topic 4",
+  "Topic 5",
+  "Topic 6",
+];
 
 export default function TopicsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const language: CampaignLanguage = searchParams.get("lang") === "fr" ? "fr" : "en";
+  const language: CampaignLanguage =
+    searchParams.get("lang") === "fr" ? "fr" : "en";
   const t = COPY[language];
 
   const [sectionOneSelected, setSectionOneSelected] = useState<string[]>([]);
   const [sectionTwoSelected, setSectionTwoSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
 
-  function toggle(list: string[], setList: (v: string[]) => void, value: string) {
+  function toggle(
+    list: string[],
+    setList: (v: string[]) => void,
+    value: string,
+  ) {
     if (list.includes(value)) {
       setList(list.filter((v) => v !== value));
       return;
@@ -70,7 +98,9 @@ export default function TopicsPage() {
     }
 
     const rawInfo = localStorage.getItem("campaign-form-info");
-    const formInfo = rawInfo ? (JSON.parse(rawInfo) as Record<string, string | boolean>) : {};
+    const formInfo = rawInfo
+      ? (JSON.parse(rawInfo) as Record<string, string | boolean>)
+      : {};
 
     const letterBody = [
       "To the Honourable Marjorie Michel, Minister of Health,",
@@ -79,9 +109,7 @@ export default function TopicsPage() {
       "",
       "I am writing to share my priorities:",
       ...sectionOneSelected.map((topic, idx) => `${idx + 1}. ${topic}`),
-      ...sectionTwoSelected.map(
-        (topic, idx) => `${idx + 3}. ${topic}`,
-      ),
+      ...sectionTwoSelected.map((topic, idx) => `${idx + 3}. ${topic}`),
       "",
       "Thank you for your attention.",
       "",
@@ -115,72 +143,102 @@ export default function TopicsPage() {
             return (
               <div
                 key={label}
-                className={`px-4 py-2 text-center text-sm font-bold ${
-                  active ? "bg-[#59b0df] text-white" : "bg-[#dcdcdc] text-[#222]"
-                }`}
+                className={`px-4 py-2 text-center ${active ? "bg-[#59b0df] text-white" : "bg-[#dcdcdc] text-[#222]"}`}
               >
-                {label}
+                <Text as="span" size="xs" className="font-bold">
+                  {label}
+                </Text>
               </div>
             );
           })}
         </div>
 
-        <h1 className="mt-8 text-5xl font-black text-[#444] md:text-6xl">{t.heading}</h1>
+        <Text as="h1" size="xl" className="mt-8 font-black text-[#444]">
+          {t.heading}
+        </Text>
 
         <div className="mt-6">
-          <h2 className="text-4xl font-black text-[#444] md:text-5xl">{t.sectionOne}</h2>
+          <Text as="h2" size="lg" className="font-black text-[#444]">
+            {t.sectionOne}
+          </Text>
           <div className="mt-3 space-y-2">
             {SECTION_ONE.map((topic) => (
               <label
                 key={topic}
-                className="flex items-center gap-3 bg-[#dedede] px-4 py-2 text-lg text-[#333]"
+                className="flex items-center gap-3 bg-[#dedede] px-4 py-2"
               >
                 <input
                   type="checkbox"
                   checked={sectionOneSelected.includes(topic)}
-                  onChange={() => toggle(sectionOneSelected, setSectionOneSelected, topic)}
+                  onChange={() =>
+                    toggle(sectionOneSelected, setSectionOneSelected, topic)
+                  }
                 />
-                <span>{topic}</span>
+                <Text as="span" size="sm" className="text-[#333]">
+                  {topic}
+                </Text>
               </label>
             ))}
           </div>
         </div>
 
         <div className="mt-10">
-          <h2 className="text-4xl font-black text-[#444] md:text-5xl">{t.sectionTwo}</h2>
+          <Text as="h2" size="lg" className="font-black text-[#444]">
+            {t.sectionTwo}
+          </Text>
           <div className="mt-3 space-y-2">
             {SECTION_TWO.map((topic) => (
               <label
                 key={topic}
-                className="flex items-center gap-3 bg-[#dedede] px-4 py-2 text-lg text-[#333]"
+                className="flex items-center gap-3 bg-[#dedede] px-4 py-2"
               >
                 <input
                   type="checkbox"
                   checked={sectionTwoSelected.includes(topic)}
-                  onChange={() => toggle(sectionTwoSelected, setSectionTwoSelected, topic)}
+                  onChange={() =>
+                    toggle(sectionTwoSelected, setSectionTwoSelected, topic)
+                  }
                 />
-                <span>{topic}</span>
+                <Text as="span" size="sm" className="text-[#333]">
+                  {topic}
+                </Text>
               </label>
             ))}
           </div>
         </div>
 
-        {error ? <p className="mt-4 text-sm font-semibold text-red-600">{error}</p> : null}
+        {error ? (
+          <Text as="p" size="xs" className="mt-4 font-semibold text-red-600">
+            {error}
+          </Text>
+        ) : null}
 
         <div className="mt-8 flex gap-3">
           <button
             type="button"
             onClick={handleBack}
-            className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 text-sm font-black uppercase text-white hover:bg-[#4aa2d2]"
+            className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 uppercase text-white hover:bg-[#4aa2d2]"
           >
-            {t.back}
+            <Text
+              as="span"
+              size="xs"
+              className="font-black uppercase text-white"
+            >
+              {t.back}
+            </Text>
           </button>
           <button
             type="button"
             onClick={handleNext}
-            className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 text-sm font-black uppercase text-white hover:bg-[#4aa2d2]"
+            className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 uppercase text-white hover:bg-[#4aa2d2]"
           >
-            {t.next}
+            <Text
+              as="span"
+              size="xs"
+              className="font-black uppercase text-white"
+            >
+              {t.next}
+            </Text>
           </button>
         </div>
       </section>
