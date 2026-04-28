@@ -3,6 +3,8 @@ import { insertSubmission } from "@/lib/submissions";
 import { CampaignFormInput } from "@/types/campaign";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+
 function required(value?: string) {
   return Boolean(value && value.trim().length > 0);
 }
@@ -40,10 +42,18 @@ export async function POST(request: Request) {
       mpEmail: submission.mpEmail,
       province: submission.province,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
+    const e = error as { message?: string; code?: string | number; name?: string };
     return NextResponse.json(
-      { error: "Failed to save submission." },
+      {
+        error: "Failed to save submission.",
+        debug: {
+          name: e?.name ?? null,
+          code: e?.code ?? null,
+          message: e?.message ?? null,
+        },
+      },
       { status: 500 },
     );
   }
