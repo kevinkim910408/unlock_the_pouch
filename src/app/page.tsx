@@ -7,6 +7,8 @@ import CanadaMap from "@/components/canada-map";
 import HomeReset from "@/components/home-reset";
 import { CampaignLanguage } from "@/types/campaign";
 
+export const dynamic = "force-dynamic";
+
 type HomePageProps = {
   searchParams: Promise<{ lang?: string }>;
 };
