@@ -15,6 +15,7 @@ import {
   getTemplateUsageStats,
   getTopicSelectionStats,
 } from "@/lib/submissions";
+import { CampaignSubmission } from "@/types/campaign";
 
 type SearchParams = Promise<{
   tab?: string | string[];
@@ -133,6 +134,7 @@ export default async function AdminPage({
   const printStatus =
     printStatusRaw === "pending" || printStatusRaw === "printed" ? printStatusRaw : "all";
   const printQuery = (single(params.q) ?? "").trim();
+  type PrintSubmissionRow = CampaignSubmission;
 
   const [stats, topicStats, importantTopicStats, customers, printRows] = await Promise.all([
     getSubmissionStats(),
@@ -152,10 +154,10 @@ export default async function AdminPage({
           query: printQuery,
           limit: 1000,
         })
-      : Promise.resolve([]),
+      : Promise.resolve([] as PrintSubmissionRow[]),
   ]);
   const templateStats = await getTemplateUsageStats();
-  const printableRows = printRows.map((row) => ({
+  const printableRows = (printRows as PrintSubmissionRow[]).map((row) => ({
     ...row,
     _id: String(row._id),
   }));

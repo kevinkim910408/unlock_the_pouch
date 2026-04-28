@@ -214,7 +214,7 @@ function buildPrintQuery(options?: {
     if (!Number.isNaN(n)) {
       query.submissionNumber = n;
     } else {
-      query._id = new ObjectId("000000000000000000000000");
+      query.submissionNumber = -1;
     }
   }
 
@@ -226,7 +226,7 @@ function buildPrintQuery(options?: {
     if (status === "pending") Object.assign(query, withLegacyPending("printStatusMinister"));
     if (status === "printed") query.printStatusMinister = "printed";
   } else if (target === "mp") {
-    query.mpEmail = { $exists: true, $ne: null };
+    query.mpEmail = { $exists: true, $ne: "" };
     if (status === "pending") Object.assign(query, withLegacyPending("printStatusMp"));
     if (status === "printed") query.printStatusMp = "printed";
   } else {
@@ -259,7 +259,7 @@ export async function getPrintSubmissions(options?: {
   limit?: number;
 }) {
   const db = await getDb();
-  const collection = db.collection(SUBMISSIONS_COLLECTION);
+  const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
 
   const limit = options?.limit ?? 1000;
   const query = buildPrintQuery(options);
@@ -274,7 +274,7 @@ export async function getPrintSubmissionIds(options?: {
   limit?: number;
 }) {
   const db = await getDb();
-  const collection = db.collection(SUBMISSIONS_COLLECTION);
+  const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
   const limit = options?.limit ?? 1000;
   const query = buildPrintQuery(options);
   const rows = await collection.find(query).project({ _id: 1 }).limit(limit).toArray();
@@ -346,7 +346,7 @@ export async function markPrintedBulk(
       },
     );
     const mpResult = await collection.updateMany(
-      { _id: { $in: objectIds }, mpEmail: { $exists: true, $ne: null } },
+      { _id: { $in: objectIds }, mpEmail: { $exists: true, $ne: "" } },
       {
         $set: {
           printStatusMp: nextStatus,

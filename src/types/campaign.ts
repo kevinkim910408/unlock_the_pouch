@@ -1,3 +1,5 @@
+import type { ObjectId } from "mongodb";
+
 export type CampaignLanguage = "en" | "fr";
 
 export type TopicSection = "health" | "community";
@@ -38,7 +40,7 @@ export type CampaignFormInput = {
 };
 
 export type CampaignSubmission = {
-  _id?: string;
+  _id?: ObjectId | string;
   submissionNumber?: number;
   createdAt: Date;
   language: CampaignLanguage;
