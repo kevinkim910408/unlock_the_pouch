@@ -11,7 +11,15 @@ type PreviewData = {
   letterBody?: string;
   ministerLetterBody?: string;
   premierLetterBody?: string;
+  subjectLine?: string;
+  openingTemplateId?: string;
+  closingTemplateId?: string;
+  endingTemplateId?: string;
   selectedTopics?: string[];
+  importantTopicIds?: string[];
+  importantTopicVariantIds?: string[];
+  desiredTopicIds?: string[];
+  desiredTopicVariantIds?: string[];
   province?: string;
   firstName?: string;
   lastName?: string;
@@ -19,6 +27,7 @@ type PreviewData = {
   ministerEmail?: string;
   mpEmail?: string;
   mpName?: string;
+  mpRiding?: string;
   premierEmail?: string;
 };
 
@@ -117,7 +126,7 @@ I am writing to share my concerns and priorities.
 Sincerely,
 John Doe`;
 
-function ProviderRow() {
+function ProviderRow({ mailtoHref }: { mailtoHref: string }) {
   const providers = [
     { name: "GMAIL", src: "/gmail.svg" },
     { name: "OUTLOOK", src: "/outlook.svg" },
@@ -127,8 +136,9 @@ function ProviderRow() {
   return (
     <div className="mt-3 flex flex-wrap gap-4">
       {providers.map((provider) => (
-        <div
+        <a
           key={provider.name}
+          href={mailtoHref}
           className="flex h-14 w-28 flex-col items-center justify-center gap-1 bg-transparent text-[#555]"
         >
           <Image
@@ -141,7 +151,7 @@ function ProviderRow() {
           <Text as="span" size="xs" className="font-bold">
             {provider.name}
           </Text>
-        </div>
+        </a>
       ))}
     </div>
   );
@@ -156,6 +166,8 @@ type LetterPanelProps = {
   copyLetter: string;
   copied: string;
   body: string;
+  subjectLine?: string;
+  recipientEmails: string[];
   recipients: string[];
   sendToLabel: string;
 };
@@ -169,10 +181,15 @@ function LetterPanel({
   copyLetter,
   copied,
   body,
+  subjectLine,
+  recipientEmails,
   recipients,
   sendToLabel,
 }: LetterPanelProps) {
   const [copySuccess, setCopySuccess] = useState(false);
+  const mailtoHref = `mailto:${recipientEmails.join(",")}?subject=${encodeURIComponent(
+    subjectLine ?? "",
+  )}&body=${encodeURIComponent(body)}`;
 
   async function handleCopyLetter() {
     try {
@@ -192,6 +209,11 @@ function LetterPanel({
       <Text as="p" size="xs" className="mt-4 font-black text-[#4fa9db]">
         {step1}
       </Text>
+      {subjectLine ? (
+        <Text as="p" size="xs" className="mt-2 text-[#333]">
+          Subject: {subjectLine}
+        </Text>
+      ) : null}
       <div className="mt-2 border border-[#b9b9b9] bg-white p-3">
         <pre className="max-h-[260px] overflow-y-auto whitespace-pre-wrap t-5 leading-5 text-[#333]">
           {body}
@@ -224,7 +246,7 @@ function LetterPanel({
       <Text as="p" size="xs" className="mt-2 text-[#444]">
         Please select your email provider.
       </Text>
-      <ProviderRow />
+      <ProviderRow mailtoHref={mailtoHref} />
       {recipients.length > 0 ? (
         <div className="mt-3">
           <Text as="p" size="xs" className="font-black text-[#444]">
@@ -296,9 +318,17 @@ export default function FinalPage() {
 
     return lines;
   }, [preview]);
+  const ministerRecipientEmails = useMemo(() => {
+    const emails = [preview?.ministerEmail ?? "marjorie.michel@parl.gc.ca"];
+    if (preview?.mpEmail) emails.push(preview.mpEmail);
+    return emails;
+  }, [preview]);
   const premierRecipientLines = useMemo(() => {
     if (!preview?.premierEmail) return [];
     return [`Premier (${preview.premierEmail})`];
+  }, [preview]);
+  const premierRecipientEmails = useMemo(() => {
+    return preview?.premierEmail ? [preview.premierEmail] : [];
   }, [preview]);
 
   const saveSubmission = useCallback(async () => {
@@ -351,8 +381,17 @@ export default function FinalPage() {
           postalCode: formInfo.postalCode,
           newsletterOptIn: Boolean(formInfo.newsletterOptIn),
           topics: preview.selectedTopics ?? [],
+          importantTopicIds: preview.importantTopicIds ?? [],
+          importantTopicVariantIds: preview.importantTopicVariantIds ?? [],
+          desiredTopicIds: preview.desiredTopicIds ?? [],
+          desiredTopicVariantIds: preview.desiredTopicVariantIds ?? [],
           mpEmail: preview.mpEmail,
           mpName: preview.mpName,
+          mpRiding: preview.mpRiding,
+          subjectLine: preview.subjectLine,
+          openingTemplateId: preview.openingTemplateId,
+          closingTemplateId: preview.closingTemplateId,
+          endingTemplateId: preview.endingTemplateId,
           ministerLetterBody:
             preview.ministerLetterBody ?? preview.letterBody ?? SAMPLE_LETTER,
           premierLetterBody:
@@ -438,6 +477,8 @@ export default function FinalPage() {
             copyLetter={t.copyLetter}
             copied={t.copied}
             body={ministerLetterBody}
+            subjectLine={preview?.subjectLine}
+            recipientEmails={ministerRecipientEmails}
             recipients={recipientLines}
             sendToLabel={t.sendTo}
           />
@@ -453,6 +494,7 @@ export default function FinalPage() {
             copyLetter={t.copyLetter}
             copied={t.copied}
             body={premierLetterBody}
+            recipientEmails={premierRecipientEmails}
             recipients={premierRecipientLines}
             sendToLabel={t.sendTo}
           />

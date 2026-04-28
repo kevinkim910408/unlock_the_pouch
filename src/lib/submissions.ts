@@ -96,6 +96,94 @@ export async function getTopicSelectionStats() {
     .toArray();
 }
 
+export async function getImportantTopicStats() {
+  const db = await getDb();
+  const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
+
+  const [topicStats, variantStats, desiredTopicStats, desiredVariantStats] = await Promise.all([
+    collection
+      .aggregate<{ key: string; count: number }>([
+        { $unwind: "$importantTopicIds" },
+        { $group: { _id: "$importantTopicIds", count: { $sum: 1 } } },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        { $unwind: "$importantTopicVariantIds" },
+        { $group: { _id: "$importantTopicVariantIds", count: { $sum: 1 } } },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        { $unwind: "$desiredTopicIds" },
+        { $group: { _id: "$desiredTopicIds", count: { $sum: 1 } } },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        { $unwind: "$desiredTopicVariantIds" },
+        { $group: { _id: "$desiredTopicVariantIds", count: { $sum: 1 } } },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+  ]);
+
+  return { topicStats, variantStats, desiredTopicStats, desiredVariantStats };
+}
+
+export async function getTemplateUsageStats() {
+  const db = await getDb();
+  const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
+
+  const [openingStats, endingStats, subjectStats] = await Promise.all([
+    collection
+      .aggregate<{ key: string; count: number }>([
+        {
+          $group: {
+            _id: { $ifNull: ["$openingTemplateId", "opening-unknown"] },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        {
+          $group: {
+            _id: { $ifNull: ["$endingTemplateId", "ending-unknown"] },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        {
+          $group: {
+            _id: { $ifNull: ["$subjectLine", "subject-unknown"] },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+  ]);
+
+  return { openingStats, endingStats, subjectStats };
+}
+
 type PrintTarget = "all" | "minister" | "mp";
 type PrintFilter = "all" | "pending" | "printed";
 
@@ -108,7 +196,7 @@ function buildPrintQuery(options?: {
   const status = options?.status ?? "all";
   const queryText = options?.query?.trim();
 
-  const query: Filter<any> = {};
+  const query: Filter<CampaignSubmission> = {};
   if (queryText) {
     const n = Number(queryText);
     if (!Number.isNaN(n)) {

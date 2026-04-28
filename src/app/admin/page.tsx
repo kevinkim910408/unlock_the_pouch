@@ -2,9 +2,17 @@ import AdminInlinePrintButton from "@/components/admin-inline-print-button";
 import Text from "@/components/text";
 import { isAdminAuthenticated } from "@/lib/admin-access";
 import {
+  DESIRED_TOPICS,
+  IMPORTANT_TOPICS,
+  LETTER_ENDINGS,
+  LETTER_OPENINGS,
+} from "@/lib/campaign";
+import {
+  getImportantTopicStats,
   getPrintSubmissions,
   getSubmissionStats,
   getSubmissionsForStats,
+  getTemplateUsageStats,
   getTopicSelectionStats,
 } from "@/lib/submissions";
 
@@ -143,9 +151,10 @@ export default async function AdminPage({
     printStatusRaw === "pending" || printStatusRaw === "printed" ? printStatusRaw : "all";
   const printQuery = (single(params.q) ?? "").trim();
 
-  const [stats, topicStats, customers, printRows] = await Promise.all([
+  const [stats, topicStats, importantTopicStats, customers, printRows] = await Promise.all([
     getSubmissionStats(),
     getTopicSelectionStats(),
+    getImportantTopicStats(),
     activeTab === "customers"
       ? getSubmissionsForStats({
           filter: customerFilter,
@@ -162,6 +171,11 @@ export default async function AdminPage({
         })
       : Promise.resolve([]),
   ]);
+  const templateStats = await getTemplateUsageStats();
+  const openingLabelById = new Map(LETTER_OPENINGS.map((item) => [item.id, item.en]));
+  const endingLabelById = new Map(LETTER_ENDINGS.map((item) => [item.id, item.en]));
+  const importantTopicLabelById = new Map(IMPORTANT_TOPICS.map((item) => [item.id, item.en]));
+  const desiredTopicLabelById = new Map(DESIRED_TOPICS.map((item) => [item.id, item.en]));
 
   return (
     <main className="min-h-screen bg-[#e9e9e9] px-5 py-10 md:px-8">
@@ -235,6 +249,89 @@ export default async function AdminPage({
 
             <div className="overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                What They Want Topic Usage
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Topic
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Selected
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {importantTopicStats.desiredTopicStats.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {desiredTopicLabelById.get(row.key) ?? row.key}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                What They Want Variant Usage
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Variant
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Selected
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {importantTopicStats.desiredVariantStats.map((row) => {
+                    const [topicId, variantRaw] = row.key.split(":v");
+                    const topicLabel = desiredTopicLabelById.get(topicId) ?? topicId;
+                    const label = variantRaw
+                      ? `${topicLabel} (Variant ${variantRaw})`
+                      : row.key;
+                    return (
+                      <tr key={row.key}>
+                        <td className="border-b border-[#eeeeee] px-2 py-2">
+                          <Text as="span" size="xs" className="font-semibold text-[#333]">
+                            {label}
+                          </Text>
+                        </td>
+                        <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                          <Text as="span" size="xs" className="text-[#333]">
+                            {row.count.toLocaleString()}
+                          </Text>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 Topic Selections
               </Text>
               <table className="w-full min-w-[420px] border-collapse">
@@ -258,6 +355,203 @@ export default async function AdminPage({
                       <td className="border-b border-[#eeeeee] px-2 py-2">
                         <Text as="span" size="xs" className="font-semibold text-[#333]">
                           {row.topicId}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                Why Important Topic Usage
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Topic
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Selected
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {importantTopicStats.topicStats.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {importantTopicLabelById.get(row.key) ?? row.key}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                Why Important Variant Usage
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Variant
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Selected
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {importantTopicStats.variantStats.map((row) => {
+                    const [topicId, variantRaw] = row.key.split(":v");
+                    const topicLabel = importantTopicLabelById.get(topicId) ?? topicId;
+                    const label = variantRaw
+                      ? `${topicLabel} (Variant ${variantRaw})`
+                      : row.key;
+                    return (
+                      <tr key={row.key}>
+                        <td className="border-b border-[#eeeeee] px-2 py-2">
+                          <Text as="span" size="xs" className="font-semibold text-[#333]">
+                            {label}
+                          </Text>
+                        </td>
+                        <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                          <Text as="span" size="xs" className="text-[#333]">
+                            {row.count.toLocaleString()}
+                          </Text>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                Opening Template Usage
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Opening
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Used
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {templateStats.openingStats.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {openingLabelById.get(row.key) ?? row.key}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                Ending Usage
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Ending
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Used
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {templateStats.endingStats.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {endingLabelById.get(row.key) ?? row.key}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                Subject Usage
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Subject
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Used
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {templateStats.subjectStats.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {row.key}
                         </Text>
                       </td>
                       <td className="border-b border-[#eeeeee] px-2 py-2 text-right">

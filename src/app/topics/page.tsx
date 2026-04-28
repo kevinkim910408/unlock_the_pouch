@@ -2,12 +2,44 @@
 
 import Text from "@/components/text";
 import ProgressSteps from "@/components/progress-steps";
-import { PREMIER_EMAIL_BY_PROVINCE } from "@/lib/campaign";
+import {
+  DESIRED_TOPICS,
+  IMPORTANT_TOPICS,
+  LETTER_ENDINGS,
+  PREMIER_EMAIL_BY_PROVINCE,
+  generateLetter,
+  pickDesiredTopicVariant,
+  pickImportantTopicVariant,
+  selectRandomLetterOptions,
+} from "@/lib/campaign";
 import { CampaignLanguage } from "@/types/campaign";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useEffect, useState } from "react";
 
 const MINISTER_EMAIL_FALLBACK = "marjorie.michel@parl.gc.ca";
+
+function shuffledCopy<T>(items: T[]) {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function htmlBodyToText(html: string) {
+  return html
+    // Convert paragraph boundaries (with or without <br /> in between) into a blank line.
+    .replace(/<\/p>\s*(?:<br\s*\/?>\s*)*<p>/gi, "\n\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<p>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?p>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
 
 type Copy = {
   progress: [string, string, string];
@@ -48,23 +80,6 @@ const COPY: Record<CampaignLanguage, Copy> = {
   },
 };
 
-const SECTION_ONE = [
-  "Topic 1",
-  "Topic 2",
-  "Topic 3",
-  "Topic 4",
-  "Topic 5",
-  "Topic 6",
-];
-const SECTION_TWO = [
-  "Topic 1",
-  "Topic 2",
-  "Topic 3",
-  "Topic 4",
-  "Topic 5",
-  "Topic 6",
-];
-
 type MpLookupResponse = {
   ministerEmail?: string;
   mp?: {
@@ -72,6 +87,11 @@ type MpLookupResponse = {
     email?: string;
     districtName?: string;
   } | null;
+};
+
+type AiLetterResponse = {
+  letterHtml?: string;
+  error?: string;
 };
 
 function TopicsPageClient() {
@@ -83,7 +103,23 @@ function TopicsPageClient() {
 
   const [sectionOneSelected, setSectionOneSelected] = useState<string[]>([]);
   const [sectionTwoSelected, setSectionTwoSelected] = useState<string[]>([]);
+  const [sectionOneOptions, setSectionOneOptions] = useState(IMPORTANT_TOPICS);
+  const [sectionTwoOptions, setSectionTwoOptions] = useState(DESIRED_TOPICS);
+  const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setSectionOneOptions(shuffledCopy(IMPORTANT_TOPICS));
+      setSectionTwoOptions(shuffledCopy(DESIRED_TOPICS));
+      setReady(true);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  if (!ready) {
+    return <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]" />;
+  }
 
   function toggle(
     list: string[],
@@ -117,6 +153,7 @@ function TopicsPageClient() {
       typeof formInfo.postalCode === "string" ? formInfo.postalCode : "";
     let mpEmail: string | undefined;
     let mpName: string | undefined;
+    let mpRiding: string | undefined;
     let ministerEmail = MINISTER_EMAIL_FALLBACK;
 
     if (postalCode) {
@@ -130,47 +167,136 @@ function TopicsPageClient() {
           ministerEmail = lookup.ministerEmail ?? MINISTER_EMAIL_FALLBACK;
           mpEmail = lookup.mp?.email;
           mpName = lookup.mp?.name;
+          mpRiding = lookup.mp?.districtName;
         }
       } catch {
         // Keep fallback values if lookup fails.
       }
     }
 
-    const ministerLetterBody = [
-      "To the Honourable Marjorie Michel, Minister of Health,",
-      "",
-      "Dear Minister Holland,",
-      "",
-      "I am writing to share my priorities:",
-      ...sectionOneSelected.map((topic, idx) => `${idx + 1}. ${topic}`),
-      ...sectionTwoSelected.map((topic, idx) => `${idx + 3}. ${topic}`),
-      "",
-      "Thank you for your attention.",
-      "",
-      `${formInfo.firstName ?? ""} ${formInfo.lastName ?? ""}`.trim(),
-      `${formInfo.city ?? ""}, ${formInfo.province ?? ""} ${formInfo.postalCode ?? ""}`.trim(),
-      mpName ? `CC: ${mpName}` : "CC: Local MP",
-    ].join("\n");
+    const randomOptions = selectRandomLetterOptions();
+    const sectionOneVariants = sectionOneSelected
+      .map((topicId) => pickImportantTopicVariant(topicId))
+      .filter((item): item is { topicId: string; variantId: string; text: string; textFr: string } => Boolean(item));
+    const sectionTwoVariants = sectionTwoSelected
+      .map((topicId) => pickDesiredTopicVariant(topicId))
+      .filter((item): item is { topicId: string; variantId: string; text: string; textFr: string } => Boolean(item));
+    const sectionOneVariantTexts = sectionOneVariants.map((item) =>
+      language === "fr" ? item.textFr : item.text,
+    );
+    const sectionTwoVariantTexts = sectionTwoVariants.map((item) =>
+      language === "fr" ? item.textFr : item.text,
+    );
+    const selectedTopics = [...sectionOneVariantTexts, ...sectionTwoVariantTexts];
+    const fallbackLetterBody = generateLetter({
+      language,
+      firstName: String(formInfo.firstName ?? ""),
+      lastName: String(formInfo.lastName ?? ""),
+      email: String(formInfo.email ?? ""),
+      city: String(formInfo.city ?? ""),
+      province: String(formInfo.province ?? ""),
+      postalCode: String(formInfo.postalCode ?? ""),
+      newsletterOptIn: Boolean(formInfo.newsletterOptIn),
+      topics: selectedTopics,
+      mpEmail,
+      mpName,
+      mpRiding,
+      subjectLine: language === "fr" ? randomOptions.subjectLineFr : randomOptions.subjectLine,
+      openingTemplateId: randomOptions.openingTemplateId,
+      closingTemplateId: randomOptions.closingTemplateId,
+      endingTemplateId: randomOptions.endingTemplateId,
+    });
+    const endingVariant = LETTER_ENDINGS.find(
+      (item) => item.id === randomOptions.endingTemplateId,
+    );
+    const endingText =
+      language === "fr"
+        ? endingVariant?.fr ?? "Cordialement"
+        : endingVariant?.en ?? "Sincerely";
+    let ministerLetterBody = fallbackLetterBody;
+    try {
+      const aiResponse = await fetch("/api/ai-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          language,
+          name: `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim(),
+          riding: mpRiding ?? String(formInfo.province ?? ""),
+          topics: selectedTopics,
+        }),
+      });
+      if (aiResponse.ok) {
+        const aiData = (await aiResponse.json()) as AiLetterResponse;
+        if (aiData.letterHtml && aiData.letterHtml.trim().length > 0) {
+          const generatedBody = htmlBodyToText(aiData.letterHtml);
+          const greeting =
+            language === "fr" ? "Chere Ministre Michel," : "Dear Minister Michel,";
+          const ccLine = mpEmail
+            ? language === "fr"
+              ? `CC : ${mpEmail}`
+              : `CC: ${mpEmail}`
+            : "";
+
+          ministerLetterBody = [
+            greeting,
+            "",
+            generatedBody,
+            "",
+            `${endingText},`,
+            `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim(),
+            `${String(formInfo.city ?? "")}, ${String(formInfo.province ?? "")}, ${String(formInfo.postalCode ?? "")}`.trim(),
+            ccLine,
+          ]
+            .filter((line) => line.length > 0)
+            .join("\n");
+        }
+      }
+    } catch {
+      // Keep local fallback if AI generation fails.
+    }
 
     const premierEmail =
       typeof formInfo.province === "string"
         ? PREMIER_EMAIL_BY_PROVINCE[formInfo.province]
         : undefined;
 
-    const premierLetterBody = [
-      "To the Premier,",
-      "",
-      "Dear Premier,",
-      "",
-      "I am writing to share my priorities for provincial action:",
-      ...sectionOneSelected.map((topic, idx) => `${idx + 1}. ${topic}`),
-      ...sectionTwoSelected.map((topic, idx) => `${idx + 3}. ${topic}`),
-      "",
-      "Thank you for your attention.",
-      "",
-      `${formInfo.firstName ?? ""} ${formInfo.lastName ?? ""}`.trim(),
-      `${formInfo.city ?? ""}, ${formInfo.province ?? ""} ${formInfo.postalCode ?? ""}`.trim(),
-    ].join("\n");
+    const userFullName = `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim();
+    const premierLetterBody =
+      language === "fr"
+        ? [
+            "Cher Premier ministre,",
+            "",
+            "Vous etes peut-etre au courant qu'un debat a actuellement lieu au Canada dans le domaine de la reduction des mefaits lies au tabac. Il porte sur les sachets de nicotine, et plus particulierement sur ceux concus pour aider les Canadiens qui fument a cesser de fumer.",
+            "",
+            "En aout 2024, le gouvernement federal a adopte un arrete ministeriel qui a restreint la vente des sachets de nicotine, specifiquement concus comme aides au sevrage tabagique, aux seules pharmacies.",
+            "",
+            "Cet arrete ministeriel a retire ces sachets des depanneurs - precisement l'endroit ou les cigarettes sont vendues. Il oblige les Canadiens qui cherchent de l'aide pour arreter de fumer a se rendre en pharmacie, a faire la file avec d'autres clients venus obtenir des medicaments sur ordonnance et a repondre a des questions sur leurs habitudes tabagiques. Pourtant, ces memes Canadiens peuvent facilement traverser la rue et acheter un paquet de cigarettes au depanneur du coin, sans qu'on leur pose la moindre question.",
+            "",
+            "Ce n'est PAS une politique de bon sens. Elle reduit l'accessibilite et le choix pour les fumeurs adultes canadiens, au nom de la protection des enfants. Proteger les enfants contre la nicotine est un objectif louable, mais cet arrete ministeriel n'est pas la bonne facon d'y parvenir. Il a entraine la vente de sachets de nicotine illegaux partout au pays, contenant des niveaux de nicotine plus eleves et offrant davantage d'aromes.",
+            "",
+            "Il est temps pour le gouvernement federal d'abroger cet arrete ministeriel et de rendre ces sachets disponibles la ou les cigarettes sont vendues. J'espere que notre province s'harmonisera avec le gouvernement federal s'il adopte une approche de bon sens. Vous aurez tout mon appui.",
+            "",
+            "Cordialement,",
+            "",
+            userFullName,
+          ].join("\n")
+        : [
+            "Dear Premier,",
+            "",
+            "You may be aware that there is a debate happening right now in Canada's tobacco harm reduction world. It's about nicotine pouches and specifically those designed to help Canadians who smoke quit.",
+            "",
+            "In August 2024, the federal government implemented a Ministerial Order that restricted the sale of licenced nicotine pouches developed specifically as quit-smoking aids to pharmacies.",
+            "",
+            "The Ministerial Order removed these pouches from convenience stores - the very place where cigarettes are sold. The Ministerial Order forced Canadians who are looking for help to quit smoking to make a trip to a pharmacy, line up with other prescription-seeking customers and answer questions about their smoking habits. Yet these Canadians could easily go to the corner store across the street and buy a pack of cigarettes 'no questions asked'.",
+            "",
+            "This is NOT common-sense policy making. It removes availability and choice from adult Canadian smokers all in the name of protecting children. Protecting children from nicotine is a noble goal but this Ministerial Order is not the way to do it. It has resulted in illegal nicotine pouches being sold across the country with higher levels of nicotine and more flavours.",
+            "",
+            "It is time for the federal government to rescind the Ministerial Order and make these pouches available where cigarettes are sold. I hope that our province aligns with the federal government if it decides on a commonsense approach. You would have my full support.",
+            "",
+            "Sincerely,",
+            "",
+            userFullName,
+          ].join("\n");
 
     localStorage.setItem(
       "campaign-preview",
@@ -178,15 +304,25 @@ function TopicsPageClient() {
         letterBody: ministerLetterBody,
         ministerLetterBody,
         premierLetterBody,
+        subjectLine:
+          language === "fr" ? randomOptions.subjectLineFr : randomOptions.subjectLine,
+        openingTemplateId: randomOptions.openingTemplateId,
+        closingTemplateId: randomOptions.closingTemplateId,
+        endingTemplateId: randomOptions.endingTemplateId,
         ministerEmail,
         mpEmail,
         mpName,
+        mpRiding,
         premierEmail,
         province: (formInfo.province as string) ?? "ON",
         firstName: (formInfo.firstName as string) ?? "",
         lastName: (formInfo.lastName as string) ?? "",
         language,
-        selectedTopics: [...sectionOneSelected, ...sectionTwoSelected],
+        selectedTopics,
+        importantTopicIds: sectionOneSelected,
+        importantTopicVariantIds: sectionOneVariants.map((item) => item.variantId),
+        desiredTopicIds: sectionTwoSelected,
+        desiredTopicVariantIds: sectionTwoVariants.map((item) => item.variantId),
       }),
     );
 
@@ -207,22 +343,31 @@ function TopicsPageClient() {
             {t.sectionOne}
           </Text>
           <div className="mt-3 space-y-2">
-            {SECTION_ONE.map((topic) => (
+            {sectionOneOptions.map((topic) => (
+              (() => {
+                const checked = sectionOneSelected.includes(topic.id);
+                const disabled = sectionOneSelected.length >= 2 && !checked;
+                return (
               <label
-                key={topic}
-                className="flex items-center gap-3 bg-[#dedede] px-4 py-2"
+                key={topic.id}
+                className={`flex items-center gap-3 px-4 py-2 transition ${
+                  disabled ? "cursor-not-allowed bg-[#d6d6d6] opacity-60" : "cursor-pointer bg-[#dedede]"
+                }`}
               >
                 <input
                   type="checkbox"
-                  checked={sectionOneSelected.includes(topic)}
+                  checked={checked}
+                  disabled={disabled}
                   onChange={() =>
-                    toggle(sectionOneSelected, setSectionOneSelected, topic)
+                    toggle(sectionOneSelected, setSectionOneSelected, topic.id)
                   }
                 />
                 <Text as="span" size="sm" className="text-[#333]">
-                  {topic}
+                  {language === "fr" ? topic.fr : topic.en}
                 </Text>
               </label>
+                );
+              })()
             ))}
           </div>
         </div>
@@ -232,22 +377,31 @@ function TopicsPageClient() {
             {t.sectionTwo}
           </Text>
           <div className="mt-3 space-y-2">
-            {SECTION_TWO.map((topic) => (
+            {sectionTwoOptions.map((topic) => (
+              (() => {
+                const checked = sectionTwoSelected.includes(topic.id);
+                const disabled = sectionTwoSelected.length >= 2 && !checked;
+                return (
               <label
-                key={topic}
-                className="flex items-center gap-3 bg-[#dedede] px-4 py-2"
+                key={topic.id}
+                className={`flex items-center gap-3 px-4 py-2 transition ${
+                  disabled ? "cursor-not-allowed bg-[#d6d6d6] opacity-60" : "cursor-pointer bg-[#dedede]"
+                }`}
               >
                 <input
                   type="checkbox"
-                  checked={sectionTwoSelected.includes(topic)}
+                  checked={checked}
+                  disabled={disabled}
                   onChange={() =>
-                    toggle(sectionTwoSelected, setSectionTwoSelected, topic)
+                    toggle(sectionTwoSelected, setSectionTwoSelected, topic.id)
                   }
                 />
                 <Text as="span" size="sm" className="text-[#333]">
-                  {topic}
+                  {language === "fr" ? topic.fr : topic.en}
                 </Text>
               </label>
+                );
+              })()
             ))}
           </div>
         </div>
@@ -291,10 +445,14 @@ function TopicsPageClient() {
   );
 }
 
+const TopicsPageClientOnly = dynamic(
+  async () => ({ default: TopicsPageClient }),
+  {
+    ssr: false,
+    loading: () => <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]" />,
+  },
+);
+
 export default function TopicsPage() {
-  return (
-    <Suspense fallback={<main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]" />}>
-      <TopicsPageClient />
-    </Suspense>
-  );
+  return <TopicsPageClientOnly />;
 }
