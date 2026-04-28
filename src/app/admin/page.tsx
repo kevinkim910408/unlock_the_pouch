@@ -1,4 +1,4 @@
-import AdminInlinePrintButton from "@/components/admin-inline-print-button";
+﻿import AdminPrintSelectionTable from "@/components/admin-print-selection-table";
 import Text from "@/components/text";
 import { isAdminAuthenticated } from "@/lib/admin-access";
 import {
@@ -40,23 +40,6 @@ function formatDate(value: Date | string | undefined) {
 
 function tabHref(tab: "stats" | "print" | "customers") {
   return `/admin?tab=${tab}`;
-}
-
-function statusCell(status: string, hasTarget: boolean) {
-  if (!hasTarget) {
-    return <span className="text-[#999]">-</span>;
-  }
-  const printed = status === "printed";
-  return (
-    <span
-      className={`inline-flex items-center gap-1 font-semibold ${
-        printed ? "text-[#1d7f2a]" : "text-[#a06a00]"
-      }`}
-    >
-      <span>{printed ? "✓" : "○"}</span>
-      <span>{printed ? "Printed" : "Pending"}</span>
-    </span>
-  );
 }
 
 function TabLink({
@@ -172,6 +155,10 @@ export default async function AdminPage({
       : Promise.resolve([]),
   ]);
   const templateStats = await getTemplateUsageStats();
+  const printableRows = printRows.map((row) => ({
+    ...row,
+    _id: String(row._id),
+  }));
   const openingLabelById = new Map(LETTER_OPENINGS.map((item) => [item.id, item.en]));
   const endingLabelById = new Map(LETTER_ENDINGS.map((item) => [item.id, item.en]));
   const importantTopicLabelById = new Map(IMPORTANT_TOPICS.map((item) => [item.id, item.en]));
@@ -564,6 +551,44 @@ export default async function AdminPage({
                 </tbody>
               </table>
             </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                Premier Subject Usage
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Subject
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Used
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {templateStats.premierSubjectStats.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {row.key}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : null}
 
@@ -653,7 +678,7 @@ export default async function AdminPage({
                   defaultValue={printTarget}
                   className="rounded border border-[#cfcfcf] bg-white px-2 py-1 text-sm"
                 >
-                  <option value="all">All (Minister + MP)</option>
+                  <option value="all">All (Minister + MP + Premier)</option>
                   <option value="minister">Minister</option>
                   <option value="mp">MP</option>
                 </select>
@@ -686,84 +711,17 @@ export default async function AdminPage({
               <Text as="p" size="xs" className="text-[#666]">
                 Showing {printRows.length.toLocaleString()} letters
               </Text>
-              <AdminInlinePrintButton
-                target={printTarget}
-                status={printStatus}
-                query={printQuery}
-              />
             </div>
-
-            <div className="admin-print-only mt-6">
-              {printRows.map((row) => (
-                <div key={`print-${String(row._id)}`}>
-                  {(printTarget === "all" || printTarget === "minister") && (
-                    <section className="admin-print-letter">
-                      <pre className="whitespace-pre-wrap text-[12px] leading-[1.55] text-black">
-                        {row.letterBody}
-                      </pre>
-                    </section>
-                  )}
-                  {(printTarget === "all" || printTarget === "mp") && row.mpEmail ? (
-                    <section className="admin-print-letter">
-                      <pre className="whitespace-pre-wrap text-[12px] leading-[1.55] text-black">
-                        {row.letterBody}
-                      </pre>
-                    </section>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[1050px] border-collapse">
-                <thead>
-                  <tr>
-                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Letter #</th>
-                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Created</th>
-                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Name</th>
-                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Email</th>
-                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Province</th>
-                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Minister Printed</th>
-                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">MP Printed</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {printRows.map((row) => {
-                    const ministerStatus = row.printStatusMinister ?? "pending";
-                    const mpStatus = row.mpEmail ? (row.printStatusMp ?? "pending") : "n/a";
-                    const number = row.submissionNumber ?? "-";
-                    return (
-                      <tr key={String(row._id)}>
-                        <td className="border-b border-[#eeeeee] px-2 py-2 align-top font-semibold">
-                          {number}
-                        </td>
-                        <td className="border-b border-[#eeeeee] px-2 py-2 align-top">
-                          {formatDate(row.createdAt)}
-                        </td>
-                        <td className="border-b border-[#eeeeee] px-2 py-2 align-top">
-                          {row.firstName} {row.lastName}
-                        </td>
-                        <td className="border-b border-[#eeeeee] px-2 py-2 align-top">
-                          {row.email}
-                        </td>
-                        <td className="border-b border-[#eeeeee] px-2 py-2 align-top">
-                          {row.province}
-                        </td>
-                        <td className="border-b border-[#eeeeee] px-2 py-2 align-top">
-                          {statusCell(ministerStatus, true)}
-                        </td>
-                        <td className="border-b border-[#eeeeee] px-2 py-2">
-                          {statusCell(mpStatus, Boolean(row.mpEmail))}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <AdminPrintSelectionTable
+              rows={printableRows}
+              target={printTarget}
+              status={printStatus}
+              query={printQuery}
+            />
           </div>
         ) : null}
       </section>
     </main>
   );
 }
+

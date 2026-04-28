@@ -142,7 +142,7 @@ export async function getTemplateUsageStats() {
   const db = await getDb();
   const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
 
-  const [openingStats, endingStats, subjectStats] = await Promise.all([
+  const [openingStats, endingStats, subjectStats, premierSubjectStats] = await Promise.all([
     collection
       .aggregate<{ key: string; count: number }>([
         {
@@ -179,9 +179,21 @@ export async function getTemplateUsageStats() {
         { $sort: { count: -1 } },
       ])
       .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        {
+          $group: {
+            _id: { $ifNull: ["$premierSubjectLine", "premier-subject-unknown"] },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
   ]);
 
-  return { openingStats, endingStats, subjectStats };
+  return { openingStats, endingStats, subjectStats, premierSubjectStats };
 }
 
 type PrintTarget = "all" | "minister" | "mp";
@@ -267,6 +279,24 @@ export async function getPrintSubmissionIds(options?: {
   const query = buildPrintQuery(options);
   const rows = await collection.find(query).project({ _id: 1 }).limit(limit).toArray();
   return rows.map((row) => String(row._id));
+}
+
+export async function getPrintSubmissionsByIds(ids: string[]) {
+  const objectIds = ids
+    .map((id) => {
+      try {
+        return new ObjectId(id);
+      } catch {
+        return null;
+      }
+    })
+    .filter((id): id is ObjectId => Boolean(id));
+
+  if (objectIds.length === 0) return [];
+
+  const db = await getDb();
+  const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
+  return collection.find({ _id: { $in: objectIds } }).sort({ createdAt: -1 }).toArray();
 }
 
 export async function markPrintedBulk(

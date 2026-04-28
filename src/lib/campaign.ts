@@ -26,18 +26,81 @@ export const PROVINCES = [
   "YT",
 ] as const;
 
-export const PREMIER_EMAIL_BY_PROVINCE: Partial<Record<string, string>> = {
-  AB: "premier@gov.ab.ca",
-  BC: "premier@gov.bc.ca",
-  MB: "premier@leg.gov.mb.ca",
-  NB: "premier@gnb.ca",
-  NL: "premier@gov.nl.ca",
-  NS: "premier@novascotia.ca",
-  ON: "premier@ontario.ca",
-  PE: "premier@gov.pe.ca",
-  QC: "premier@quebec.ca",
-  SK: "premier@gov.sk.ca",
+export const PREMIER_EMAIL_BY_PROVINCE: Partial<Record<string, string[]>> = {
+  NL: ["LelaEvans@gov.nl.ca", "TonyWakeham@gov.nl.ca", "CraigPardy@gov.nl.ca"],
+  PE: ["slacorn@gov.pe.ca", "premier@gov.pe.ca", "MinisterFinance@gov.pe.ca"],
+  NS: [
+    "Health.Minister@novascotia.ca",
+    "premier@novascotia.ca",
+    "brian.comer@novascotia.ca",
+    "OSDMIN@novascotia.ca",
+    "SLTCmin@novascotia.ca",
+  ],
+  NB: ["John.Dornan@gnb.ca", "Susan.Holt@gnb.ca", "rene.legacy@gnb.ca"],
+  ON: [
+    "sylvia.jones@ontario.ca",
+    "Premier@ontario.ca",
+    "andrea.khanjinco@pc.ola.org",
+    "lisa.thompsonco@pc.ola.org",
+  ],
+  MB: ["minhealth@leg.gov.mb.ca", "premier@manitoba.ca", "minfin@manitoba.ca"],
+  SK: [
+    "he.minister@gov.sk.ca",
+    "premier@gov.sk.ca",
+    "fin.minister@gov.sk.ca",
+    "lori.carr@gov.sk.ca",
+  ],
+  AB: ["health.minister@gov.ab.ca", "premier@gov.ab.ca", "ministersa@gov.ab.ca"],
+  BC: [
+    "HLTH.Minister@gov.bc.ca",
+    "premier@gov.bc.ca",
+    "Niki.Sharma.MLA@leg.bc.ca",
+    "Amna.Shah.MLA@leg.bc.ca",
+  ],
+  YT: ["premier@yukon.ca", "brad.cathers@yukon.ca"],
+  NT: ["premier@gov.nt.ca", "lesa_semmler@gov.nt.ca"],
+  NU: ["premier@gov.nu.ca"],
+  QC: ["Christine.Frechette.SAGU@assnat.qc.ca", "Sonia.Belanger.PREV@assnat.qc.ca"],
 };
+
+export const MINISTER_EMAIL_BY_PROVINCE: Partial<Record<string, string>> = {
+  NL: "LelaEvans@gov.nl.ca",
+  PE: "slacorn@gov.pe.ca",
+  NS: "Health.Minister@novascotia.ca",
+  NB: "John.Dornan@gnb.ca",
+  ON: "sylvia.jones@ontario.ca",
+  MB: "minhealth@leg.gov.mb.ca",
+  SK: "he.minister@gov.sk.ca",
+  AB: "health.minister@gov.ab.ca",
+  BC: "HLTH.Minister@gov.bc.ca",
+  YT: "brad.cathers@yukon.ca",
+  NT: "lesa_semmler@gov.nt.ca",
+  QC: "Sonia.Belanger.PREV@assnat.qc.ca",
+};
+
+export const MINISTER_NAME_BY_PROVINCE: Partial<Record<string, string>> = {
+  NL: "Lela Evans",
+  PE: "Cory Deagle",
+  NS: "Michelle Thompson",
+  NB: "John Dornan",
+  ON: "Sylvia Jones",
+  MB: "Uzoma Asagwara",
+  SK: "Jeremy Cockrill",
+  AB: "Adriana LaGrange",
+  BC: "Josie Osborne",
+  YT: "Brad Cathers",
+  NT: "Lesa Semmler",
+  QC: "Sonia Belanger",
+};
+
+export function getMinisterGreeting(language: CampaignLanguage, province?: string) {
+  const code = (province ?? "").trim().toUpperCase();
+  const ministerName = MINISTER_NAME_BY_PROVINCE[code];
+  if (language === "fr") {
+    return ministerName ? `Cher Ministre ${ministerName},` : "Chere Ministre,";
+  }
+  return ministerName ? `Dear Minister ${ministerName},` : "Dear Minister,";
+}
 
 export const TOPICS: Topic[] = [
   {
@@ -456,6 +519,19 @@ export const LETTER_SUBJECTS: LetterVariant[] = [
   { id: "subject-28", en: "Policy Concern from a Canadian Voter", fr: "Preoccupation politique d'un electeur canadien" },
 ];
 
+export const PREMIER_SUBJECTS: LetterVariant[] = [
+  { id: "premier-subject-1", en: "It’s Easier to Buy Cigarettes Than Quit — That Needs to Change", fr: "Il est plus facile d’acheter des cigarettes que d’arrêter — ça doit changer" },
+  { id: "premier-subject-2", en: "Premier: Support Common-Sense Access to Quit-Smoking Tools", fr: "Premier ministre : appuyez un accès de bon sens aux outils pour cesser de fumer" },
+  { id: "premier-subject-3", en: "Fix This: Quit Aids Shouldn’t Be Harder to Access Than Cigarettes", fr: "Corrigeons cela : les aides à l’arrêt ne devraient pas être plus difficiles à obtenir que les cigarettes" },
+  { id: "premier-subject-4", en: "Time to Reverse a Policy That Hurts Smokers Trying to Quit", fr: "Il est temps de renverser une politique qui nuit à ceux qui veulent arrêter" },
+  { id: "premier-subject-5", en: "A Simple Ask: Make Quit-Smoking Options Easier to Access", fr: "Une demande simple : faciliter l’accès aux solutions pour cesser de fumer" },
+  { id: "premier-subject-6", en: "Help Us Fix a Policy That Doesn’t Make Sense", fr: "Aidez-nous à corriger une politique qui n’a pas de sens" },
+  { id: "premier-subject-7", en: "Premier, Will You Support Access to Lower-Risk Alternatives?", fr: "Premier ministre, appuierez-vous l’accès à des solutions à risque réduit?" },
+  { id: "premier-subject-8", en: "Let’s Put Quit-Smoking Tools Back Where Smokers Can Access Them", fr: "Remettons les outils pour cesser de fumer là où les fumeurs peuvent y accéder" },
+  { id: "premier-subject-9", en: "This Policy Is Driving People to the Black Market — Let’s Fix It", fr: "Cette politique alimente le marché noir — corrigeons-la" },
+  { id: "premier-subject-10", en: "Support Adult Access to Safer Alternatives — It’s Common Sense", fr: "Appuyez l’accès des adultes à des solutions plus sûres — c’est du gros bon sens" },
+];
+
 export const SOCIAL_SHARE_OPTIONS: Array<{ id: string; en: string; fr: string }> = [
   {
     id: "share-option-1",
@@ -506,6 +582,7 @@ export function selectRandomLetterOptions() {
   const closing = randomPick(LETTER_CLOSINGS);
   const ending = randomPick(LETTER_ENDINGS);
   const subject = randomPick(LETTER_SUBJECTS);
+  const premierSubject = randomPick(PREMIER_SUBJECTS);
 
   return {
     openingTemplateId: opening.id,
@@ -513,6 +590,9 @@ export function selectRandomLetterOptions() {
     endingTemplateId: ending.id,
     subjectLine: subject.en,
     subjectLineFr: subject.fr,
+    premierSubjectLine: premierSubject.en,
+    premierSubjectLineFr: premierSubject.fr,
+    premierSubjectTemplateId: premierSubject.id,
   };
 }
 
@@ -581,7 +661,7 @@ export function generateLetter(input: CampaignFormInput): string {
 
   if (input.language === "fr") {
     return [
-      "Chere Ministre Michel,",
+      getMinisterGreeting("fr", input.province),
       "",
       replaceTokens(getVariantText(opening, "fr"), input),
       "",
@@ -598,7 +678,7 @@ export function generateLetter(input: CampaignFormInput): string {
   }
 
   return [
-    "Dear Minister Michel,",
+    getMinisterGreeting("en", input.province),
     "",
     replaceTokens(getVariantText(opening, "en"), input),
     "",
@@ -637,12 +717,14 @@ export function toSubmission(
     mpName: input.mpName?.trim() || undefined,
     mpRiding: input.mpRiding?.trim() || undefined,
     subjectLine: input.subjectLine?.trim() || undefined,
+    premierSubjectLine: input.premierSubjectLine?.trim() || undefined,
     openingTemplateId: input.openingTemplateId?.trim() || undefined,
     closingTemplateId: input.closingTemplateId?.trim() || undefined,
     endingTemplateId: input.endingTemplateId?.trim() || undefined,
     letterBody: input.ministerLetterBody ?? letterBody,
+    mpLetterBody: input.mpLetterBody?.trim() || undefined,
     premierLetterBody: input.premierLetterBody,
-    ministerEmail: MINISTER_EMAIL,
+    ministerEmail: input.ministerEmail?.trim() || MINISTER_EMAIL,
     printStatusMinister: "pending",
     printStatusMp: input.mpEmail ? "pending" : "not_applicable",
   };

@@ -10,8 +10,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 type PreviewData = {
   letterBody?: string;
   ministerLetterBody?: string;
+  mpLetterBody?: string;
   premierLetterBody?: string;
   subjectLine?: string;
+  premierSubjectLine?: string;
   openingTemplateId?: string;
   closingTemplateId?: string;
   endingTemplateId?: string;
@@ -303,32 +305,41 @@ export default function FinalPage() {
     () => preview?.premierLetterBody ?? preview?.letterBody ?? SAMPLE_LETTER,
     [preview],
   );
-  const recipientLines = useMemo(() => {
-    const lines: string[] = [];
-    lines.push(
-      `Honourable Marjorie Michel (${preview?.ministerEmail ?? "marjorie.michel@parl.gc.ca"})`,
-    );
-
-    if (preview?.mpEmail) {
-      const label = preview.mpName ? preview.mpName : "Local MP";
-      lines.push(`${label} (${preview.mpEmail})`);
-    } else if (preview?.mpName) {
-      lines.push(preview.mpName);
-    }
-
-    return lines;
-  }, [preview]);
   const ministerRecipientEmails = useMemo(() => {
-    const emails = [preview?.ministerEmail ?? "marjorie.michel@parl.gc.ca"];
-    if (preview?.mpEmail) emails.push(preview.mpEmail);
-    return emails;
+    const provinceEmails = preview?.premierEmail
+      ? preview.premierEmail
+          .split(",")
+          .map((email) => email.trim())
+          .filter(Boolean)
+      : [];
+    const nonPremierProvinceEmails = provinceEmails.filter(
+      (email) => !email.toLowerCase().includes("premier@"),
+    );
+    const combined =
+      nonPremierProvinceEmails.length > 0
+        ? nonPremierProvinceEmails
+        : [preview?.ministerEmail ?? "marjorie.michel@parl.gc.ca"];
+    return Array.from(new Set(combined));
   }, [preview]);
+  const ministerRecipientLines = useMemo(() => {
+    return ministerRecipientEmails;
+  }, [ministerRecipientEmails]);
   const premierRecipientLines = useMemo(() => {
     if (!preview?.premierEmail) return [];
-    return [`Premier (${preview.premierEmail})`];
+    return preview.premierEmail
+      .split(",")
+      .map((email) => email.trim())
+      .filter(Boolean)
+      .filter((email) => email.toLowerCase().includes("premier@"));
   }, [preview]);
   const premierRecipientEmails = useMemo(() => {
-    return preview?.premierEmail ? [preview.premierEmail] : [];
+    return preview?.premierEmail
+      ? preview.premierEmail
+          .split(",")
+          .map((email) => email.trim())
+          .filter(Boolean)
+          .filter((email) => email.toLowerCase().includes("premier@"))
+      : [];
   }, [preview]);
 
   const saveSubmission = useCallback(async () => {
@@ -388,12 +399,16 @@ export default function FinalPage() {
           mpEmail: preview.mpEmail,
           mpName: preview.mpName,
           mpRiding: preview.mpRiding,
+          ministerEmail: preview.ministerEmail,
           subjectLine: preview.subjectLine,
+          premierSubjectLine: preview.premierSubjectLine,
           openingTemplateId: preview.openingTemplateId,
           closingTemplateId: preview.closingTemplateId,
           endingTemplateId: preview.endingTemplateId,
           ministerLetterBody:
             preview.ministerLetterBody ?? preview.letterBody ?? SAMPLE_LETTER,
+          mpLetterBody:
+            preview.mpLetterBody ?? preview.ministerLetterBody ?? preview.letterBody ?? SAMPLE_LETTER,
           premierLetterBody:
             preview.premierLetterBody ?? preview.letterBody ?? SAMPLE_LETTER,
         }),
@@ -479,7 +494,7 @@ export default function FinalPage() {
             body={ministerLetterBody}
             subjectLine={preview?.subjectLine}
             recipientEmails={ministerRecipientEmails}
-            recipients={recipientLines}
+            recipients={ministerRecipientLines}
             sendToLabel={t.sendTo}
           />
         </div>
@@ -494,6 +509,7 @@ export default function FinalPage() {
             copyLetter={t.copyLetter}
             copied={t.copied}
             body={premierLetterBody}
+            subjectLine={preview?.premierSubjectLine}
             recipientEmails={premierRecipientEmails}
             recipients={premierRecipientLines}
             sendToLabel={t.sendTo}

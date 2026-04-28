@@ -5,6 +5,8 @@ import ProgressSteps from "@/components/progress-steps";
 import {
   DESIRED_TOPICS,
   IMPORTANT_TOPICS,
+  MINISTER_EMAIL_BY_PROVINCE,
+  getMinisterGreeting,
   LETTER_ENDINGS,
   PREMIER_EMAIL_BY_PROVINCE,
   generateLetter,
@@ -30,16 +32,25 @@ function shuffledCopy<T>(items: T[]) {
 
 function htmlBodyToText(html: string) {
   return html
-    // Convert paragraph boundaries (with or without <br /> in between) into a blank line.
     .replace(/<\/p>\s*(?:<br\s*\/?>\s*)*<p>/gi, "\n\n")
     .replace(/<\/p>/gi, "\n\n")
     .replace(/<p>/gi, "")
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/?p>/gi, "")
     .replace(/<[^>]+>/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
+function buildMpLetterFromMinisterLetter(ministerLetter: string, mpName?: string) {
+  const mpLabel = (mpName ?? "").trim() || "Member of Parliament";
+  const lines = ministerLetter.split("\n");
+  if (lines.length > 0) {
+    lines[0] = /^Ch(?:er|ere)\b/i.test(lines[0]) ? `Cher ${mpLabel},` : `Dear ${mpLabel},`;
+  }
+  const normalized = lines.join("\n").replace(/\nCC\s*:.*$/gim, "").trim();
+  return normalized;
+}
+
 
 type Copy = {
   progress: [string, string, string];
@@ -49,6 +60,7 @@ type Copy = {
   back: string;
   next: string;
   error: string;
+  generating: string;
 };
 
 const COPY: Record<CampaignLanguage, Copy> = {
@@ -64,6 +76,7 @@ const COPY: Record<CampaignLanguage, Copy> = {
     back: "Back",
     next: "Next",
     error: "Please select 2 topics from each section.",
+    generating: "Generating your letter...",
   },
   fr: {
     progress: [
@@ -77,6 +90,7 @@ const COPY: Record<CampaignLanguage, Copy> = {
     back: "Retour",
     next: "Suivant",
     error: "Veuillez choisir 2 sujets dans chaque section.",
+    generating: "Generation de votre lettre...",
   },
 };
 
@@ -106,6 +120,7 @@ function TopicsPageClient() {
   const [sectionOneOptions, setSectionOneOptions] = useState(IMPORTANT_TOPICS);
   const [sectionTwoOptions, setSectionTwoOptions] = useState(DESIRED_TOPICS);
   const [ready, setReady] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -139,131 +154,141 @@ function TopicsPageClient() {
   }
 
   async function handleNext() {
+    if (isGenerating) return;
     if (sectionOneSelected.length !== 2 || sectionTwoSelected.length !== 2) {
       setError(t.error);
       return;
     }
+    setIsGenerating(true);
 
-    const rawInfo = localStorage.getItem("campaign-form-info");
-    const formInfo = rawInfo
-      ? (JSON.parse(rawInfo) as Record<string, string | boolean>)
-      : {};
+    try {
+      const rawInfo = localStorage.getItem("campaign-form-info");
+      const formInfo = rawInfo
+        ? (JSON.parse(rawInfo) as Record<string, string | boolean>)
+        : {};
 
-    const postalCode =
-      typeof formInfo.postalCode === "string" ? formInfo.postalCode : "";
-    let mpEmail: string | undefined;
-    let mpName: string | undefined;
-    let mpRiding: string | undefined;
-    let ministerEmail = MINISTER_EMAIL_FALLBACK;
+      const postalCode =
+        typeof formInfo.postalCode === "string" ? formInfo.postalCode : "";
+      let mpEmail: string | undefined;
+      let mpName: string | undefined;
+      let mpRiding: string | undefined;
+      let ministerEmail = MINISTER_EMAIL_FALLBACK;
+      const provinceCode =
+        typeof formInfo.province === "string" ? formInfo.province.trim().toUpperCase() : "";
+      if (provinceCode && MINISTER_EMAIL_BY_PROVINCE[provinceCode]) {
+        ministerEmail = MINISTER_EMAIL_BY_PROVINCE[provinceCode] as string;
+      }
 
-    if (postalCode) {
+      if (postalCode) {
+        try {
+          const response = await fetch(
+            `/api/mp-lookup?postalCode=${encodeURIComponent(postalCode)}`,
+            { cache: "no-store" },
+          );
+          if (response.ok) {
+            const lookup = (await response.json()) as MpLookupResponse;
+            mpEmail = lookup.mp?.email;
+            mpName = lookup.mp?.name;
+            mpRiding = lookup.mp?.districtName;
+          }
+        } catch {
+          // Keep fallback values if lookup fails.
+        }
+      }
+
+      const randomOptions = selectRandomLetterOptions();
+      const sectionOneVariants = sectionOneSelected
+        .map((topicId) => pickImportantTopicVariant(topicId))
+        .filter((item): item is { topicId: string; variantId: string; text: string; textFr: string } => Boolean(item));
+      const sectionTwoVariants = sectionTwoSelected
+        .map((topicId) => pickDesiredTopicVariant(topicId))
+        .filter((item): item is { topicId: string; variantId: string; text: string; textFr: string } => Boolean(item));
+      const sectionOneVariantTexts = sectionOneVariants.map((item) =>
+        language === "fr" ? item.textFr : item.text,
+      );
+      const sectionTwoVariantTexts = sectionTwoVariants.map((item) =>
+        language === "fr" ? item.textFr : item.text,
+      );
+      const selectedTopics = [...sectionOneVariantTexts, ...sectionTwoVariantTexts];
+      const fallbackLetterBody = generateLetter({
+        language,
+        firstName: String(formInfo.firstName ?? ""),
+        lastName: String(formInfo.lastName ?? ""),
+        email: String(formInfo.email ?? ""),
+        city: String(formInfo.city ?? ""),
+        province: String(formInfo.province ?? ""),
+        postalCode: String(formInfo.postalCode ?? ""),
+        newsletterOptIn: Boolean(formInfo.newsletterOptIn),
+        topics: selectedTopics,
+        mpEmail,
+        mpName,
+        mpRiding,
+        subjectLine: language === "fr" ? randomOptions.subjectLineFr : randomOptions.subjectLine,
+        openingTemplateId: randomOptions.openingTemplateId,
+        closingTemplateId: randomOptions.closingTemplateId,
+        endingTemplateId: randomOptions.endingTemplateId,
+      });
+      let ministerLetterBody = fallbackLetterBody;
       try {
-        const response = await fetch(
-          `/api/mp-lookup?postalCode=${encodeURIComponent(postalCode)}`,
-          { cache: "no-store" },
-        );
-        if (response.ok) {
-          const lookup = (await response.json()) as MpLookupResponse;
-          ministerEmail = lookup.ministerEmail ?? MINISTER_EMAIL_FALLBACK;
-          mpEmail = lookup.mp?.email;
-          mpName = lookup.mp?.name;
-          mpRiding = lookup.mp?.districtName;
+        const aiResponse = await fetch("/api/ai-letter", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            language,
+            name: `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim(),
+            riding: mpRiding ?? String(formInfo.province ?? ""),
+            topics: selectedTopics,
+          }),
+        });
+        if (aiResponse.ok) {
+          const aiData = (await aiResponse.json()) as AiLetterResponse;
+          if (aiData.letterHtml && aiData.letterHtml.trim().length > 0) {
+            const generatedBody = htmlBodyToText(aiData.letterHtml);
+            const endingVariant = LETTER_ENDINGS.find(
+              (item) => item.id === randomOptions.endingTemplateId,
+            );
+            const endingText =
+              language === "fr"
+                ? endingVariant?.fr ?? "Cordialement"
+                : endingVariant?.en ?? "Sincerely";
+            const greeting = getMinisterGreeting(
+              language,
+              String(formInfo.province ?? ""),
+            );
+            const fullName = `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim();
+            const location = `${String(formInfo.city ?? "")}, ${String(formInfo.province ?? "")}, ${String(formInfo.postalCode ?? "")}`.trim();
+            const ccLine = mpEmail
+              ? language === "fr"
+                ? `CC : ${mpEmail}`
+                : `CC: ${mpEmail}`
+              : "";
+
+            ministerLetterBody = [
+              greeting,
+              "",
+              generatedBody,
+              "",
+              `${endingText},`,
+              fullName,
+              location,
+              ccLine,
+            ].join("\n");
+          }
         }
       } catch {
-        // Keep fallback values if lookup fails.
+        // Keep fallback letter if AI generation fails.
       }
-    }
 
-    const randomOptions = selectRandomLetterOptions();
-    const sectionOneVariants = sectionOneSelected
-      .map((topicId) => pickImportantTopicVariant(topicId))
-      .filter((item): item is { topicId: string; variantId: string; text: string; textFr: string } => Boolean(item));
-    const sectionTwoVariants = sectionTwoSelected
-      .map((topicId) => pickDesiredTopicVariant(topicId))
-      .filter((item): item is { topicId: string; variantId: string; text: string; textFr: string } => Boolean(item));
-    const sectionOneVariantTexts = sectionOneVariants.map((item) =>
-      language === "fr" ? item.textFr : item.text,
-    );
-    const sectionTwoVariantTexts = sectionTwoVariants.map((item) =>
-      language === "fr" ? item.textFr : item.text,
-    );
-    const selectedTopics = [...sectionOneVariantTexts, ...sectionTwoVariantTexts];
-    const fallbackLetterBody = generateLetter({
-      language,
-      firstName: String(formInfo.firstName ?? ""),
-      lastName: String(formInfo.lastName ?? ""),
-      email: String(formInfo.email ?? ""),
-      city: String(formInfo.city ?? ""),
-      province: String(formInfo.province ?? ""),
-      postalCode: String(formInfo.postalCode ?? ""),
-      newsletterOptIn: Boolean(formInfo.newsletterOptIn),
-      topics: selectedTopics,
-      mpEmail,
-      mpName,
-      mpRiding,
-      subjectLine: language === "fr" ? randomOptions.subjectLineFr : randomOptions.subjectLine,
-      openingTemplateId: randomOptions.openingTemplateId,
-      closingTemplateId: randomOptions.closingTemplateId,
-      endingTemplateId: randomOptions.endingTemplateId,
-    });
-    const endingVariant = LETTER_ENDINGS.find(
-      (item) => item.id === randomOptions.endingTemplateId,
-    );
-    const endingText =
-      language === "fr"
-        ? endingVariant?.fr ?? "Cordialement"
-        : endingVariant?.en ?? "Sincerely";
-    let ministerLetterBody = fallbackLetterBody;
-    try {
-      const aiResponse = await fetch("/api/ai-letter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language,
-          name: `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim(),
-          riding: mpRiding ?? String(formInfo.province ?? ""),
-          topics: selectedTopics,
-        }),
-      });
-      if (aiResponse.ok) {
-        const aiData = (await aiResponse.json()) as AiLetterResponse;
-        if (aiData.letterHtml && aiData.letterHtml.trim().length > 0) {
-          const generatedBody = htmlBodyToText(aiData.letterHtml);
-          const greeting =
-            language === "fr" ? "Chere Ministre Michel," : "Dear Minister Michel,";
-          const ccLine = mpEmail
-            ? language === "fr"
-              ? `CC : ${mpEmail}`
-              : `CC: ${mpEmail}`
-            : "";
+      const premierEmail =
+        typeof formInfo.province === "string"
+          ? PREMIER_EMAIL_BY_PROVINCE[formInfo.province]?.join(",")
+          : undefined;
+      const mpLetterBody = buildMpLetterFromMinisterLetter(ministerLetterBody, mpName);
 
-          ministerLetterBody = [
-            greeting,
-            "",
-            generatedBody,
-            "",
-            `${endingText},`,
-            `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim(),
-            `${String(formInfo.city ?? "")}, ${String(formInfo.province ?? "")}, ${String(formInfo.postalCode ?? "")}`.trim(),
-            ccLine,
-          ]
-            .filter((line) => line.length > 0)
-            .join("\n");
-        }
-      }
-    } catch {
-      // Keep local fallback if AI generation fails.
-    }
-
-    const premierEmail =
-      typeof formInfo.province === "string"
-        ? PREMIER_EMAIL_BY_PROVINCE[formInfo.province]
-        : undefined;
-
-    const userFullName = `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim();
-    const premierLetterBody =
-      language === "fr"
-        ? [
+      const userFullName = `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim();
+      const premierLetterBody =
+        language === "fr"
+          ? [
             "Cher Premier ministre,",
             "",
             "Vous etes peut-etre au courant qu'un debat a actuellement lieu au Canada dans le domaine de la reduction des mefaits lies au tabac. Il porte sur les sachets de nicotine, et plus particulierement sur ceux concus pour aider les Canadiens qui fument a cesser de fumer.",
@@ -277,10 +302,9 @@ function TopicsPageClient() {
             "Il est temps pour le gouvernement federal d'abroger cet arrete ministeriel et de rendre ces sachets disponibles la ou les cigarettes sont vendues. J'espere que notre province s'harmonisera avec le gouvernement federal s'il adopte une approche de bon sens. Vous aurez tout mon appui.",
             "",
             "Cordialement,",
-            "",
             userFullName,
-          ].join("\n")
-        : [
+            ].join("\n")
+          : [
             "Dear Premier,",
             "",
             "You may be aware that there is a debate happening right now in Canada's tobacco harm reduction world. It's about nicotine pouches and specifically those designed to help Canadians who smoke quit.",
@@ -294,43 +318,60 @@ function TopicsPageClient() {
             "It is time for the federal government to rescind the Ministerial Order and make these pouches available where cigarettes are sold. I hope that our province aligns with the federal government if it decides on a commonsense approach. You would have my full support.",
             "",
             "Sincerely,",
-            "",
             userFullName,
-          ].join("\n");
+            ].join("\n");
 
-    localStorage.setItem(
-      "campaign-preview",
-      JSON.stringify({
-        letterBody: ministerLetterBody,
-        ministerLetterBody,
-        premierLetterBody,
-        subjectLine:
-          language === "fr" ? randomOptions.subjectLineFr : randomOptions.subjectLine,
-        openingTemplateId: randomOptions.openingTemplateId,
-        closingTemplateId: randomOptions.closingTemplateId,
-        endingTemplateId: randomOptions.endingTemplateId,
-        ministerEmail,
-        mpEmail,
-        mpName,
-        mpRiding,
-        premierEmail,
-        province: (formInfo.province as string) ?? "ON",
-        firstName: (formInfo.firstName as string) ?? "",
-        lastName: (formInfo.lastName as string) ?? "",
-        language,
-        selectedTopics,
-        importantTopicIds: sectionOneSelected,
-        importantTopicVariantIds: sectionOneVariants.map((item) => item.variantId),
-        desiredTopicIds: sectionTwoSelected,
-        desiredTopicVariantIds: sectionTwoVariants.map((item) => item.variantId),
-      }),
-    );
+      localStorage.setItem(
+        "campaign-preview",
+        JSON.stringify({
+          letterBody: ministerLetterBody,
+          ministerLetterBody,
+          mpLetterBody,
+          premierLetterBody,
+          subjectLine:
+            language === "fr" ? randomOptions.subjectLineFr : randomOptions.subjectLine,
+          premierSubjectLine:
+            language === "fr"
+              ? randomOptions.premierSubjectLineFr
+              : randomOptions.premierSubjectLine,
+          openingTemplateId: randomOptions.openingTemplateId,
+          closingTemplateId: randomOptions.closingTemplateId,
+          endingTemplateId: randomOptions.endingTemplateId,
+          ministerEmail,
+          mpEmail,
+          mpName,
+          mpRiding,
+          premierEmail,
+          province: (formInfo.province as string) ?? "ON",
+          firstName: (formInfo.firstName as string) ?? "",
+          lastName: (formInfo.lastName as string) ?? "",
+          language,
+          selectedTopics,
+          importantTopicIds: sectionOneSelected,
+          importantTopicVariantIds: sectionOneVariants.map((item) => item.variantId),
+          desiredTopicIds: sectionTwoSelected,
+          desiredTopicVariantIds: sectionTwoVariants.map((item) => item.variantId),
+        }),
+      );
 
-    router.push("/final");
+      router.push("/final");
+    } catch {
+      setError(language === "fr" ? "Une erreur est survenue." : "Something went wrong.");
+      setIsGenerating(false);
+    }
   }
 
   return (
     <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]">
+      {isGenerating ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="rounded bg-white px-6 py-4 shadow-lg">
+            <Text as="p" size="sm" className="font-semibold text-[#333]">
+              {t.generating}
+            </Text>
+          </div>
+        </div>
+      ) : null}
       <section className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-8 md:py-10">
         <ProgressSteps labels={t.progress} activeCount={2} />
 
@@ -416,6 +457,7 @@ function TopicsPageClient() {
           <button
             type="button"
             onClick={handleBack}
+            disabled={isGenerating}
             className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 uppercase text-white hover:bg-[#4aa2d2]"
           >
             <Text
@@ -429,6 +471,7 @@ function TopicsPageClient() {
           <button
             type="button"
             onClick={handleNext}
+            disabled={isGenerating}
             className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-5 py-2 uppercase text-white hover:bg-[#4aa2d2]"
           >
             <Text
@@ -440,6 +483,11 @@ function TopicsPageClient() {
             </Text>
           </button>
         </div>
+        {isGenerating ? (
+          <Text as="p" size="xs" className="mt-3 font-semibold text-[#333]">
+            {t.generating}
+          </Text>
+        ) : null}
       </section>
     </main>
   );

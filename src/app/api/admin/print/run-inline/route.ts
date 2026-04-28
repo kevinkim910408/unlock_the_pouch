@@ -12,6 +12,7 @@ export async function POST(request: Request) {
   const targetRaw = String(formData.get("target") ?? "all");
   const statusRaw = String(formData.get("status") ?? "all");
   const q = String(formData.get("q") ?? "").trim();
+  const idsRaw = String(formData.get("ids") ?? "").trim();
 
   const target =
     targetRaw === "minister" || targetRaw === "mp" || targetRaw === "all"
@@ -22,12 +23,25 @@ export async function POST(request: Request) {
       ? statusRaw
       : "all";
 
-  const ids = await getPrintSubmissionIds({
-    target,
-    status,
-    query: q,
-    limit: 1000,
-  });
+  let ids: string[] = [];
+  if (idsRaw) {
+    try {
+      const parsed = JSON.parse(idsRaw) as unknown;
+      if (Array.isArray(parsed)) {
+        ids = parsed.filter((id): id is string => typeof id === "string");
+      }
+    } catch {
+      ids = [];
+    }
+  }
+  if (ids.length === 0) {
+    ids = await getPrintSubmissionIds({
+      target,
+      status,
+      query: q,
+      limit: 1000,
+    });
+  }
 
   if (ids.length > 0) {
     await markPrintedBulk(ids, target, "printed");

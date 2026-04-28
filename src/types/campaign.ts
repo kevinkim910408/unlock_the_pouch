@@ -26,11 +26,14 @@ export type CampaignFormInput = {
   mpEmail?: string;
   mpName?: string;
   mpRiding?: string;
+  ministerEmail?: string;
   subjectLine?: string;
+  premierSubjectLine?: string;
   openingTemplateId?: string;
   closingTemplateId?: string;
   endingTemplateId?: string;
   ministerLetterBody?: string;
+  mpLetterBody?: string;
   premierLetterBody?: string;
 };
 
@@ -55,10 +58,12 @@ export type CampaignSubmission = {
   mpName?: string;
   mpRiding?: string;
   subjectLine?: string;
+  premierSubjectLine?: string;
   openingTemplateId?: string;
   closingTemplateId?: string;
   endingTemplateId?: string;
   letterBody: string;
+  mpLetterBody?: string;
   premierLetterBody?: string;
   ministerEmail: string;
   printStatusMinister: "pending" | "printed";
