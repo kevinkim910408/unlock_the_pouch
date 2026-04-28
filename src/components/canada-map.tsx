@@ -93,20 +93,28 @@ export default function CanadaMap({ language }: CanadaMapProps) {
 
   return (
     <section className="mx-auto w-full max-w-[1200px] px-5 pb-12 md:px-8">
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap justify-center gap-1">
         <button
           onClick={() => setToggle(false)}
-          className={`px-4 py-2 ${!toggle ? "bg-[#1da8df] text-white" : "bg-[#dddddd] text-[#444]"}`}
+          className={`px-2 py-1.5 md:min-w-[140px] md:px-4 md:py-2 ${!toggle ? "bg-[#1da8df] text-white" : "bg-[#dddddd] text-[#444]"}`}
         >
-          <Text as="span" size="xs" className="font-bold uppercase">
+          <Text
+            as="span"
+            size="xs"
+            className="text-[10px] font-bold uppercase md:text-xs"
+          >
             {isFr ? "Soumissions" : "Submissions"}
           </Text>
         </button>
         <button
           onClick={() => setToggle(true)}
-          className={`px-4 py-2 ${toggle ? "bg-[#1da8df] text-white" : "bg-[#dddddd] text-[#444]"}`}
+          className={`min-w-[128px] px-2 py-1.5 md:min-w-[170px] md:px-4 md:py-2 ${toggle ? "bg-[#1da8df] text-white" : "bg-[#dddddd] text-[#444]"}`}
         >
-          <Text as="span" size="xs" className="font-bold uppercase">
+          <Text
+            as="span"
+            size="xs"
+            className="text-[10px] font-bold uppercase md:text-xs"
+          >
             {isFr ? "Soumissions vs Population" : "Submissions vs Population"}
           </Text>
         </button>

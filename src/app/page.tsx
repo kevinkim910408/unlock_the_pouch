@@ -174,14 +174,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <Text
               as="p"
               size="lg"
-              className="text-right font-black text-[#1da8df]"
+              className="text-center font-black text-[#1da8df] md:text-right"
             >
               {total.toLocaleString()}
             </Text>
             <Text
               as="p"
               size="md"
-              className="mt-3 text-right font-black uppercase text-[#444]"
+              className="mt-3 text-center font-black uppercase text-[#444] md:text-right"
             >
               {t.statLabel}
             </Text>
@@ -226,7 +226,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         <div className="flex min-h-[280px] items-center justify-center bg-[#efefef] p-6">
-          <div>
+          <div className="text-center md:text-left">
             <Text
               as="p"
               size="md"
