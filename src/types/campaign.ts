@@ -20,10 +20,14 @@ export type CampaignFormInput = {
   newsletterOptIn: boolean;
   topics: string[];
   mpEmail?: string;
+  mpName?: string;
+  ministerLetterBody?: string;
+  premierLetterBody?: string;
 };
 
 export type CampaignSubmission = {
   _id?: string;
+  submissionNumber?: number;
   createdAt: Date;
   language: CampaignLanguage;
   firstName: string;
@@ -31,13 +35,18 @@ export type CampaignSubmission = {
   postalCode: string;
   province: string;
   city: string;
-  email?: string;
+  email: string;
   newsletterOptIn: boolean;
   topics: string[];
   mpEmail?: string;
-  mpSelected: boolean;
+  mpName?: string;
   letterBody: string;
+  premierLetterBody?: string;
   ministerEmail: string;
+  printStatusMinister: "pending" | "printed";
+  printStatusMp: "not_applicable" | "pending" | "printed";
+  printedAtMinister?: Date | null;
+  printedAtMp?: Date | null;
 };
 
 export type ProvinceStat = {

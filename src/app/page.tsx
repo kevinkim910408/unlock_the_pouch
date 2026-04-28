@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getSubmissionStats } from "@/lib/submissions";
 import Text from "@/components/text";
 import CanadaMap from "@/components/canada-map";
+import HomeReset from "@/components/home-reset";
 import { CampaignLanguage } from "@/types/campaign";
 
 type HomePageProps = {
@@ -89,17 +90,20 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const isAgeVerified = cookieStore.get("age_verified")?.value === "true";
   if (!isAgeVerified) redirect("/age-verification");
 
-  let total = 123456;
+  let total = 0;
+  let provinceStats: { province: string; count: number }[] = [];
 
   try {
     const stats = await getSubmissionStats();
     total = stats.total;
+    provinceStats = stats.provinceStats;
   } catch {
     // Keep page usable even when DB is missing in local dev.
   }
 
   return (
     <main className="min-h-screen bg-[#ececec]">
+      <HomeReset />
       <section
         className="relative bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/home-overlay.svg')" }}
@@ -245,7 +249,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </section>
 
-      <CanadaMap language={language} />
+      <CanadaMap language={language} provinceStats={provinceStats} />
     </main>
   );
 }

@@ -70,3 +70,33 @@ body {
 .deep-level-07 {
   fill: #800000;
 }
+
+.admin-print-only {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .admin-print-only,
+  .admin-print-only * {
+    visibility: visible !important;
+  }
+  .admin-print-only {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #fff;
+    margin: 0;
+    padding: 0;
+  }
+  .admin-print-letter {
+    page-break-after: always;
+    break-after: page;
+    margin: 0;
+    padding: 18mm 14mm;
+  }
+}

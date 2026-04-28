@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { createMockProvinceCounts, mapjson, populationCanada } from "@/lib/canada-map-data";
+import { mapjson, populationCanada } from "@/lib/canada-map-data";
 import Text from "@/components/text";
-import { CampaignLanguage } from "@/types/campaign";
+import { CampaignLanguage, ProvinceStat } from "@/types/campaign";
 
 type CalcData = {
   _id: string;
@@ -48,15 +48,51 @@ const submissionColor = (count: number) => {
 
 type CanadaMapProps = {
   language: CampaignLanguage;
+  provinceStats: ProvinceStat[];
 };
 
-export default function CanadaMap({ language }: CanadaMapProps) {
+const PROVINCE_CODE_TO_NAME: Record<string, string> = {
+  AB: "Alberta",
+  BC: "British Columbia",
+  MB: "Manitoba",
+  NB: "New Brunswick",
+  NL: "Newfoundland and Labrador",
+  NS: "Nova Scotia",
+  NT: "Northwest Territories",
+  NU: "Nunavut",
+  ON: "Ontario",
+  PE: "Prince Edward Island",
+  QC: "Quebec",
+  SK: "Saskatchewan",
+  YT: "Yukon",
+};
+
+function normalizeProvinceName(value: string) {
+  const trimmed = value.trim();
+  const upper = trimmed.toUpperCase();
+  return PROVINCE_CODE_TO_NAME[upper] ?? trimmed;
+}
+
+export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
   const [toggle, setToggle] = useState(false);
   const isFr = language === "fr";
 
   const sortedData = useMemo(() => {
-    return createMockProvinceCounts().sort((a, b) => b.count - a.count);
-  }, []);
+    const byName = new Map<string, number>();
+
+    provinceStats.forEach((row) => {
+      const provinceName = normalizeProvinceName(row.province);
+      byName.set(provinceName, (byName.get(provinceName) ?? 0) + row.count);
+    });
+
+    const allProvinces = populationCanada.map((p) => p.name);
+    return allProvinces
+      .map((name) => ({
+        _id: name,
+        count: byName.get(name) ?? 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [provinceStats]);
 
   const mapByProvince = useMemo(() => {
     const dictionary = new Map<string, number>();

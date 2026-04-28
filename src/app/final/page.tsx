@@ -5,12 +5,13 @@ import ProgressSteps from "@/components/progress-steps";
 import { CampaignLanguage } from "@/types/campaign";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type PreviewData = {
   letterBody?: string;
   ministerLetterBody?: string;
   premierLetterBody?: string;
+  selectedTopics?: string[];
   province?: string;
   firstName?: string;
   lastName?: string;
@@ -19,6 +20,22 @@ type PreviewData = {
   mpEmail?: string;
   mpName?: string;
   premierEmail?: string;
+};
+
+type FormInfo = {
+  language?: CampaignLanguage;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  province?: string;
+  city?: string;
+  postalCode?: string;
+  newsletterOptIn?: boolean;
+};
+
+type SubmissionResponse = {
+  id?: string;
+  error?: string;
 };
 
 type Copy = {
@@ -241,6 +258,8 @@ function LetterPanel({
 export default function FinalPage() {
   const router = useRouter();
   const [physicalSent, setPhysicalSent] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [preview] = useState<PreviewData | null>(() => {
     if (typeof window === "undefined") return null;
     const raw = localStorage.getItem("campaign-preview");
@@ -281,6 +300,97 @@ export default function FinalPage() {
     if (!preview?.premierEmail) return [];
     return [`Premier (${preview.premierEmail})`];
   }, [preview]);
+
+  const saveSubmission = useCallback(async () => {
+    if (!preview) return true;
+    if (typeof window === "undefined") return false;
+
+    const existingSubmissionId = localStorage.getItem("campaign-submission-id");
+    if (existingSubmissionId) return true;
+
+    const rawFormInfo = localStorage.getItem("campaign-form-info");
+    if (!rawFormInfo) {
+      setSaveError("Missing form info. Please start again from Home.");
+      return false;
+    }
+
+    let formInfo: FormInfo;
+    try {
+      formInfo = JSON.parse(rawFormInfo) as FormInfo;
+    } catch {
+      setSaveError("Invalid form info. Please start again from Home.");
+      return false;
+    }
+
+    if (
+      !formInfo.firstName ||
+      !formInfo.lastName ||
+      !formInfo.email ||
+      !formInfo.province ||
+      !formInfo.city ||
+      !formInfo.postalCode
+    ) {
+      setSaveError("Missing required form data.");
+      return false;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          language: formInfo.language ?? language,
+          firstName: formInfo.firstName,
+          lastName: formInfo.lastName,
+          email: formInfo.email,
+          province: formInfo.province,
+          city: formInfo.city,
+          postalCode: formInfo.postalCode,
+          newsletterOptIn: Boolean(formInfo.newsletterOptIn),
+          topics: preview.selectedTopics ?? [],
+          mpEmail: preview.mpEmail,
+          mpName: preview.mpName,
+          ministerLetterBody:
+            preview.ministerLetterBody ?? preview.letterBody ?? SAMPLE_LETTER,
+          premierLetterBody:
+            preview.premierLetterBody ?? preview.letterBody ?? SAMPLE_LETTER,
+        }),
+      });
+
+      const data = (await response.json()) as SubmissionResponse;
+      if (!response.ok || !data.id) {
+        setSaveError(data.error ?? "Failed to save submission.");
+        return false;
+      }
+
+      localStorage.setItem("campaign-submission-id", data.id);
+      return true;
+    } catch {
+      setSaveError("Failed to save submission.");
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [language, preview]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void saveSubmission();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [saveSubmission]);
+
+  async function handleComplete() {
+    if (isSaving) return;
+    const ok = await saveSubmission();
+    if (ok) {
+      router.push("/thank-you");
+    }
+  }
 
   return (
     <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]">
@@ -351,13 +461,23 @@ export default function FinalPage() {
         <div className="mt-6">
           <button
             type="button"
-            onClick={() => router.push("/thank-you")}
+            onClick={handleComplete}
             className="inline-flex min-w-[120px] items-center justify-center bg-[#59b0df] px-5 py-2 text-white"
           >
             <Text as="span" size="xs" className="font-black text-white">
               {t.complete}
             </Text>
           </button>
+          {isSaving ? (
+            <Text as="p" size="xs" className="mt-2 text-[#555]">
+              Saving submission...
+            </Text>
+          ) : null}
+          {saveError ? (
+            <Text as="p" size="xs" className="mt-2 text-red-600">
+              {saveError}
+            </Text>
+          ) : null}
         </div>
       </section>
     </main>

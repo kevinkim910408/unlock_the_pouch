@@ -1,7 +1,7 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
 
 const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB ?? "unlock_the_pouch";
+const dbName = process.env.MONGODB_DB ?? "unlock-the-pouch";
 
 if (!uri) {
   console.warn(

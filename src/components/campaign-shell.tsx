@@ -17,14 +17,6 @@ export default function CampaignShell({ title, subtitle, children }: Props) {
             Unlock the Pouch
           </Text>
         </Link>
-        <Link
-          href="/print"
-          className="rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100"
-        >
-          <Text as="span" size="xs" className="text-slate-700">
-            Print Dashboard
-          </Text>
-        </Link>
       </div>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">

@@ -146,13 +146,16 @@ export function toSubmission(
     postalCode: input.postalCode.trim(),
     province: input.province.trim(),
     city: input.city.trim(),
-    email: input.newsletterOptIn ? input.email.trim() : undefined,
+    email: input.email.trim(),
     newsletterOptIn: input.newsletterOptIn,
     topics: input.topics,
     mpEmail: input.mpEmail?.trim() || undefined,
-    mpSelected: Boolean(input.mpEmail),
-    letterBody,
+    mpName: input.mpName?.trim() || undefined,
+    letterBody: input.ministerLetterBody ?? letterBody,
+    premierLetterBody: input.premierLetterBody,
     ministerEmail: MINISTER_EMAIL,
+    printStatusMinister: "pending",
+    printStatusMp: input.mpEmail ? "pending" : "not_applicable",
   };
 }
 
