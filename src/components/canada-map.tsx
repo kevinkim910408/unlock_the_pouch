@@ -24,7 +24,7 @@ const colorRanges = [
   { bg: "#43A047", text: "3001 - 3500" },
   { bg: "#2E7D32", text: "3501 - 4000" },
   { bg: "#1B5E20", text: "4001 - 4500" },
-  { bg: "#0D3D12", text: "4501 - 5000" },
+  { bg: "#0D3D12", text: "4500+" },
 ];
 
 const rankColors = [
@@ -224,14 +224,18 @@ export default function CanadaMap({ language }: CanadaMapProps) {
         </div>
 
         <div className="relative min-h-[360px] rounded-sm bg-[#efefef] p-4">
-          <div className="absolute left-4 top-4 space-y-2">
+          <div className="absolute left-2 top-2">
             {(toggle ? rankColors : colorRanges).map((range) => (
-              <div key={range.text} className="flex items-center gap-2">
+              <div key={range.text} className="flex items-center gap-1">
                 <span
-                  className="block h-4 w-4 border border-[#bcbcbc]"
+                  className="block h-2.5 w-2.5 border border-[#bcbcbc]"
                   style={{ backgroundColor: range.bg }}
                 />
-                <Text as="span" size="xs" className="font-semibold text-[#444]">
+                <Text
+                  as="span"
+                  size="xs"
+                  className="text-[10px] font-semibold leading-none text-[#444]"
+                >
                   {range.text}
                 </Text>
               </div>
