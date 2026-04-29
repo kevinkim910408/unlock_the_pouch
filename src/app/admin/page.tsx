@@ -8,6 +8,7 @@ import {
   LETTER_OPENINGS,
 } from "@/lib/campaign";
 import {
+  getEmailActionStats,
   getImportantTopicStats,
   getPrintSubmissions,
   getSubmissionStats,
@@ -24,6 +25,7 @@ type SearchParams = Promise<{
   target?: string | string[];
   status?: string | string[];
   q?: string | string[];
+  recipient?: string | string[];
   error?: string | string[];
 }>;
 
@@ -132,14 +134,22 @@ export default async function AdminPage({
   const printTarget =
     printTargetRaw === "minister" || printTargetRaw === "mp" ? printTargetRaw : "all";
   const printStatus =
-    printStatusRaw === "pending" || printStatusRaw === "printed" ? printStatusRaw : "all";
+    printStatusRaw === "printed" ? "printed" : "pending";
   const printQuery = (single(params.q) ?? "").trim();
+  const printRecipient = (single(params.recipient) ?? "").trim();
   type PrintSubmissionRow = CampaignSubmission;
 
-  const [stats, topicStats, importantTopicStats, customers, printRows] = await Promise.all([
+  const [stats, topicStats, importantTopicStats, emailActionStats, customers, printRows] = await Promise.all([
     getSubmissionStats(),
     getTopicSelectionStats(),
     getImportantTopicStats(),
+    activeTab === "stats" ? getEmailActionStats() : Promise.resolve({
+      peopleSentToMpByMp: [],
+      emailsSentByMp: [],
+      peopleSentToPremierByProvince: [],
+      emailsSentByProvince: [],
+      lettersGeneratedByMp: [],
+    }),
     activeTab === "customers"
       ? getSubmissionsForStats({
           filter: customerFilter,
@@ -152,6 +162,7 @@ export default async function AdminPage({
           target: printTarget,
           status: printStatus,
           query: printQuery,
+          recipient: printRecipient,
           limit: 1000,
         })
       : Promise.resolve([] as PrintSubmissionRow[]),
@@ -223,6 +234,196 @@ export default async function AdminPage({
                       <td className="border-b border-[#eeeeee] px-2 py-2">
                         <Text as="span" size="xs" className="font-semibold text-[#333]">
                           {row.province}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                How Many People Sent An Email To Which MP
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        MP
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        People
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {emailActionStats.peopleSentToMpByMp.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {row.key}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                How Many Emails Sent Based On MP
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        MP
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Emails Sent
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {emailActionStats.emailsSentByMp.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {row.key}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                How Many People Sent An Email To Premier By Province
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Province
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        People
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {emailActionStats.peopleSentToPremierByProvince.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {row.key}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                How Many Emails Sent Based On Province
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Province
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Emails Sent
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {emailActionStats.emailsSentByProvince.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {row.key}
+                        </Text>
+                      </td>
+                      <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
+                        <Text as="span" size="xs" className="text-[#333]">
+                          {row.count.toLocaleString()}
+                        </Text>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
+                How Many Letters Generated Based On MP
+              </Text>
+              <table className="w-full min-w-[420px] border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        MP
+                      </Text>
+                    </th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-right">
+                      <Text as="span" size="xs" className="font-black text-[#444]">
+                        Letters
+                      </Text>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {emailActionStats.lettersGeneratedByMp.map((row) => (
+                    <tr key={row.key}>
+                      <td className="border-b border-[#eeeeee] px-2 py-2">
+                        <Text as="span" size="xs" className="font-semibold text-[#333]">
+                          {row.key}
                         </Text>
                       </td>
                       <td className="border-b border-[#eeeeee] px-2 py-2 text-right">
@@ -673,31 +874,52 @@ export default async function AdminPage({
               <Text as="h2" size="sm" className="font-black uppercase text-[#333]">
                 Print Queue
               </Text>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/admin?tab=print&status=pending&target=${printTarget}${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  className={`rounded px-3 py-1 text-sm font-bold ${
+                    printStatus === "pending"
+                      ? "bg-[#59b0df] text-white"
+                      : "bg-[#e4e4e4] text-[#444]"
+                  }`}
+                >
+                  Unprinted
+                </a>
+                <a
+                  href={`/admin?tab=print&status=printed&target=${printTarget}${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  className={`rounded px-3 py-1 text-sm font-bold ${
+                    printStatus === "printed"
+                      ? "bg-[#59b0df] text-white"
+                      : "bg-[#e4e4e4] text-[#444]"
+                  }`}
+                >
+                  Printed
+                </a>
+              </div>
               <form className="flex flex-wrap gap-2" method="get">
                 <input type="hidden" name="tab" value="print" />
+                <input type="hidden" name="status" value={printStatus} />
                 <select
                   name="target"
                   defaultValue={printTarget}
                   className="rounded border border-[#cfcfcf] bg-white px-2 py-1 text-sm"
                 >
-                  <option value="all">All (Minister + MP + Premier)</option>
+                  <option value="all">All (Minister + MP)</option>
                   <option value="minister">Minister</option>
                   <option value="mp">MP</option>
-                </select>
-                <select
-                  name="status"
-                  defaultValue={printStatus}
-                  className="rounded border border-[#cfcfcf] bg-white px-2 py-1 text-sm"
-                >
-                  <option value="all">All</option>
-                  <option value="pending">Pending only</option>
-                  <option value="printed">Printed only</option>
                 </select>
                 <input
                   type="text"
                   name="q"
                   defaultValue={printQuery}
                   placeholder="Letter #"
+                  className="rounded border border-[#cfcfcf] bg-white px-2 py-1 text-sm"
+                />
+                <input
+                  type="text"
+                  name="recipient"
+                  defaultValue={printRecipient}
+                  placeholder={printTarget === "mp" ? "MP name" : "Recipient name"}
                   className="rounded border border-[#cfcfcf] bg-white px-2 py-1 text-sm"
                 />
                 <button
@@ -719,6 +941,7 @@ export default async function AdminPage({
               target={printTarget}
               status={printStatus}
               query={printQuery}
+              recipient={printRecipient}
             />
           </div>
         ) : null}

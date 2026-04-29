@@ -72,6 +72,14 @@ export type CampaignSubmission = {
   printStatusMp: "not_applicable" | "pending" | "printed";
   printedAtMinister?: Date | null;
   printedAtMp?: Date | null;
+  emailActions?: Array<{
+    actionType: "minister_copy" | "mp_copy" | "premier_copy";
+    at: Date;
+    province?: string;
+    mpEmail?: string;
+    mpName?: string;
+    premierEmail?: string;
+  }>;
 };
 
 export type ProvinceStat = {

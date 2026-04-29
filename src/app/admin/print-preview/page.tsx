@@ -6,6 +6,7 @@ type SearchParams = Promise<{
   target?: string | string[];
   status?: string | string[];
   q?: string | string[];
+  recipient?: string | string[];
   ids?: string | string[];
 }>;
 
@@ -25,6 +26,7 @@ export default async function AdminPrintPreviewPage({
   const targetRaw = single(params.target);
   const statusRaw = single(params.status);
   const q = (single(params.q) ?? "").trim();
+  const recipient = (single(params.recipient) ?? "").trim();
   const idsRaw = (single(params.ids) ?? "").trim();
 
   const target =
@@ -38,7 +40,7 @@ export default async function AdminPrintPreviewPage({
   const rows =
     selectedIds.length > 0
       ? await getPrintSubmissionsByIds(selectedIds)
-      : await getPrintSubmissions({ target, status, query: q, limit: 1000 });
+      : await getPrintSubmissions({ target, status, query: q, recipient, limit: 1000 });
 
   return (
     <main style={{ padding: "24px", background: "#fff" }}>
@@ -75,20 +77,6 @@ export default async function AdminPrintPreviewPage({
                 </pre>
               </section>
             )}
-            {target === "all" && row.premierLetterBody ? (
-              <section className="admin-print-letter">
-                <pre
-                  style={{
-                    whiteSpace: "pre-wrap",
-                    margin: 0,
-                    fontSize: "12px",
-                    lineHeight: 1.55,
-                  }}
-                >
-                  {row.premierLetterBody}
-                </pre>
-              </section>
-            ) : null}
           </div>
         ))}
       </div>

@@ -41,6 +41,15 @@ function htmlBodyToText(html: string) {
     .trim();
 }
 
+function toTitleCase(value: string) {
+  return value
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 function buildMpLetterFromMinisterLetter(ministerLetter: string, mpName?: string) {
   const mpLabel = (mpName ?? "").trim() || "Member of Parliament";
   const lines = ministerLetter.split("\n");
@@ -255,8 +264,8 @@ function TopicsPageClient() {
               language,
               String(formInfo.province ?? ""),
             );
-            const fullName = `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim();
-            const location = `${String(formInfo.city ?? "")}, ${String(formInfo.province ?? "")}, ${String(formInfo.postalCode ?? "")}`.trim();
+            const fullName = `${toTitleCase(String(formInfo.firstName ?? ""))} ${toTitleCase(String(formInfo.lastName ?? ""))}`.trim();
+            const location = `${toTitleCase(String(formInfo.city ?? ""))}, ${String(formInfo.province ?? "").toUpperCase()}, ${String(formInfo.postalCode ?? "").toUpperCase()}`.trim();
             const ccLine = mpEmail
               ? language === "fr"
                 ? `CC : ${mpEmail}`
@@ -271,7 +280,7 @@ function TopicsPageClient() {
               `${endingText},`,
               fullName,
               location,
-              ccLine,
+              ...(ccLine ? ["", ccLine] : []),
             ].join("\n");
           }
         }
@@ -285,7 +294,7 @@ function TopicsPageClient() {
           : undefined;
       const mpLetterBody = buildMpLetterFromMinisterLetter(ministerLetterBody, mpName);
 
-      const userFullName = `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim();
+      const userFullName = `${toTitleCase(String(formInfo.firstName ?? ""))} ${toTitleCase(String(formInfo.lastName ?? ""))}`.trim();
       const premierLetterBody =
         language === "fr"
           ? [

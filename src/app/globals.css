@@ -42,8 +42,10 @@ body {
 }
 
 .map-path {
-  stroke: #f3f4f6;
+  stroke: #cbd5e1;
   stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
   transition: fill 0.2s ease;
 }
 .map-path:hover {

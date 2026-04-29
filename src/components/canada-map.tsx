@@ -91,7 +91,7 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
         _id: name,
         count: byName.get(name) ?? 0,
       }))
-      .sort((a, b) => b.count - a.count);
+      .sort((a, b) => a._id.localeCompare(b._id));
   }, [provinceStats]);
 
   const mapByProvince = useMemo(() => {
@@ -111,7 +111,7 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
           calculatedValue: population ? (item.count / population) * 100 : 0,
         };
       })
-      .sort((a, b) => b.calculatedValue - a.calculatedValue);
+      .sort((a, b) => a._id.localeCompare(b._id));
   }, [sortedData]);
 
   const rankedIds = useMemo(() => calculatedData.map((d) => d._id), [calculatedData]);

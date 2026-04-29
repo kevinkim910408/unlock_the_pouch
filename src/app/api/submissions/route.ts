@@ -25,10 +25,23 @@ function htmlToText(value: string) {
     .trim();
 }
 
+function toTitleCase(value: string) {
+  return value
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatLocation(city: string, province: string, postalCode: string) {
+  return `${toTitleCase(city.trim())}, ${province.trim().toUpperCase()}, ${postalCode.trim().toUpperCase()}`;
+}
+
 function normalizeMinisterLetter(payload: CampaignFormInput, body: string) {
   const cleanBody = htmlToText(body);
-  const fullName = `${payload.firstName.trim()} ${payload.lastName.trim()}`.trim();
-  const location = `${payload.city.trim()}, ${payload.province.trim()}, ${payload.postalCode.trim()}`;
+  const fullName = `${toTitleCase(payload.firstName.trim())} ${toTitleCase(payload.lastName.trim())}`.trim();
+  const location = formatLocation(payload.city, payload.province, payload.postalCode);
   const ending =
     payload.language === "fr"
       ? LETTER_ENDINGS.find((item) => item.id === payload.endingTemplateId)?.fr ?? "Cordialement"
@@ -52,14 +65,14 @@ function normalizeMinisterLetter(payload: CampaignFormInput, body: string) {
     `${ending},`,
     fullName,
     location,
-    ccLine,
+    ...(ccLine ? ["", ccLine] : []),
   ].join("\n");
 }
 
 function normalizeMpLetter(payload: CampaignFormInput, body: string) {
   const cleanBody = htmlToText(body);
-  const fullName = `${payload.firstName.trim()} ${payload.lastName.trim()}`.trim();
-  const location = `${payload.city.trim()}, ${payload.province.trim()}, ${payload.postalCode.trim()}`;
+  const fullName = `${toTitleCase(payload.firstName.trim())} ${toTitleCase(payload.lastName.trim())}`.trim();
+  const location = formatLocation(payload.city, payload.province, payload.postalCode);
   const ending =
     LETTER_ENDINGS.find((item) => item.id === payload.endingTemplateId)?.en ?? "Sincerely";
   const mpLabel = payload.mpName?.trim() || "Member of Parliament";

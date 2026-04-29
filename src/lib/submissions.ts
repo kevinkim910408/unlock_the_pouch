@@ -3,6 +3,7 @@ import { CampaignSubmission, ProvinceStat } from "@/types/campaign";
 import { Filter, ObjectId, Sort } from "mongodb";
 
 const SUBMISSIONS_COLLECTION = "users";
+type EmailActionType = "minister_copy" | "mp_copy" | "premier_copy";
 
 export async function insertSubmission(submission: CampaignSubmission) {
   const db = await getDb();
@@ -203,10 +204,12 @@ function buildPrintQuery(options?: {
   target?: PrintTarget;
   status?: PrintFilter;
   query?: string;
+  recipient?: string;
 }) {
   const target = options?.target ?? "all";
   const status = options?.status ?? "all";
   const queryText = options?.query?.trim();
+  const recipient = options?.recipient?.trim();
 
   const query: Filter<CampaignSubmission> = {};
   if (queryText) {
@@ -223,10 +226,17 @@ function buildPrintQuery(options?: {
   });
 
   if (target === "minister") {
+    if (recipient && !/michel/i.test(recipient)) {
+      query.submissionNumber = -1;
+      return query;
+    }
     if (status === "pending") Object.assign(query, withLegacyPending("printStatusMinister"));
     if (status === "printed") query.printStatusMinister = "printed";
   } else if (target === "mp") {
     query.mpEmail = { $exists: true, $ne: "" };
+    if (recipient) {
+      query.mpName = { $regex: recipient, $options: "i" };
+    }
     if (status === "pending") Object.assign(query, withLegacyPending("printStatusMp"));
     if (status === "printed") query.printStatusMp = "printed";
   } else {
@@ -256,6 +266,7 @@ export async function getPrintSubmissions(options?: {
   target?: PrintTarget;
   status?: PrintFilter;
   query?: string;
+  recipient?: string;
   limit?: number;
 }) {
   const db = await getDb();
@@ -271,6 +282,7 @@ export async function getPrintSubmissionIds(options?: {
   target?: PrintTarget;
   status?: PrintFilter;
   query?: string;
+  recipient?: string;
   limit?: number;
 }) {
   const db = await getDb();
@@ -367,4 +379,159 @@ export async function markPrintedBulk(
     },
   );
   return { modifiedCount: result.modifiedCount };
+}
+
+export async function recordSubmissionEmailAction(input: {
+  submissionId: string;
+  actionType: EmailActionType;
+  province?: string;
+  mpEmail?: string;
+  mpName?: string;
+  premierEmail?: string;
+}) {
+  let objectId: ObjectId;
+  try {
+    objectId = new ObjectId(input.submissionId);
+  } catch {
+    return { ok: false as const, reason: "invalid_submission_id" as const };
+  }
+
+  const db = await getDb();
+  const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
+  const result = await collection.updateOne(
+    { _id: objectId, "emailActions.actionType": { $ne: input.actionType } },
+    {
+      $push: {
+        emailActions: {
+          actionType: input.actionType,
+          at: new Date(),
+          province: input.province?.trim() || undefined,
+          mpEmail: input.mpEmail?.trim() || undefined,
+          mpName: input.mpName?.trim() || undefined,
+          premierEmail: input.premierEmail?.trim() || undefined,
+        },
+      },
+    },
+  );
+
+  if (result.modifiedCount === 1) {
+    return { ok: true as const, recorded: true as const };
+  }
+
+  const exists = await collection.countDocuments({ _id: objectId }, { limit: 1 });
+  if (exists > 0) {
+    return { ok: true as const, recorded: false as const };
+  }
+
+  return { ok: false as const, reason: "submission_not_found" as const };
+}
+
+export async function getEmailActionStats() {
+  const db = await getDb();
+  const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
+
+  const [
+    peopleSentToMpByMp,
+    emailsSentByMp,
+    peopleSentToPremierByProvince,
+    emailsSentByProvince,
+    lettersGeneratedByMp,
+  ] = await Promise.all([
+    collection
+      .aggregate<{ key: string; count: number }>([
+        { $unwind: "$emailActions" },
+        { $match: { "emailActions.actionType": "minister_copy" } },
+        {
+          $group: {
+            _id: {
+              submissionId: "$_id",
+              mpName: { $ifNull: ["$mpName", "Unknown MP"] },
+              mpEmail: { $ifNull: ["$mpEmail", "unknown@email"] },
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $concat: ["$_id.mpName", " (", "$_id.mpEmail", ")"],
+            },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        { $unwind: "$emailActions" },
+        { $match: { "emailActions.actionType": "minister_copy" } },
+        {
+          $group: {
+            _id: { $concat: [{ $ifNull: ["$mpName", "Unknown MP"] }, " (", { $ifNull: ["$mpEmail", "unknown@email"] }, ")"] },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        { $unwind: "$emailActions" },
+        { $match: { "emailActions.actionType": "premier_copy" } },
+        {
+          $group: {
+            _id: {
+              submissionId: "$_id",
+              province: { $ifNull: ["$emailActions.province", "$province"] },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: "$_id.province",
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        { $unwind: "$emailActions" },
+        { $match: { "emailActions.actionType": { $in: ["minister_copy", "premier_copy"] } } },
+        {
+          $group: {
+            _id: { $ifNull: ["$emailActions.province", "$province"] },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+    collection
+      .aggregate<{ key: string; count: number }>([
+        {
+          $group: {
+            _id: { $concat: [{ $ifNull: ["$mpName", "Unknown MP"] }, " (", { $ifNull: ["$mpEmail", "unknown@email"] }, ")"] },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, key: "$_id", count: 1 } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray(),
+  ]);
+
+  return {
+    peopleSentToMpByMp,
+    emailsSentByMp,
+    peopleSentToPremierByProvince,
+    emailsSentByProvince,
+    lettersGeneratedByMp,
+  };
 }

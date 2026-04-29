@@ -170,8 +170,11 @@ type LetterPanelProps = {
   body: string;
   subjectLine?: string;
   recipientEmails: string[];
+  ccEmails?: string[];
   recipients: string[];
+  ccRecipients?: string[];
   sendToLabel: string;
+  onCopy?: () => Promise<boolean>;
 };
 
 function LetterPanel({
@@ -185,18 +188,33 @@ function LetterPanel({
   body,
   subjectLine,
   recipientEmails,
+  ccEmails,
   recipients,
+  ccRecipients,
   sendToLabel,
+  onCopy,
 }: LetterPanelProps) {
   const [copySuccess, setCopySuccess] = useState(false);
-  const mailtoHref = `mailto:${recipientEmails.join(",")}?subject=${encodeURIComponent(
-    subjectLine ?? "",
-  )}&body=${encodeURIComponent(body)}`;
+  const [copyLocked, setCopyLocked] = useState(false);
+  const params = new URLSearchParams();
+  params.set("subject", subjectLine ?? "");
+  params.set("body", body);
+  if (ccEmails && ccEmails.length > 0) {
+    params.set("cc", ccEmails.join(","));
+  }
+  const mailtoHref = `mailto:${recipientEmails.join(",")}?${params.toString()}`;
 
   async function handleCopyLetter() {
     try {
       await navigator.clipboard.writeText(body);
+      if (onCopy) {
+        const recorded = await onCopy();
+        if (!recorded) {
+          setCopyLocked(true);
+        }
+      }
       setCopySuccess(true);
+      if (onCopy) setCopyLocked(true);
     } catch {
       setCopySuccess(false);
     }
@@ -226,7 +244,8 @@ function LetterPanel({
         <button
           type="button"
           onClick={handleCopyLetter}
-          className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-4 py-2 uppercase text-white"
+          disabled={copyLocked}
+          className="inline-flex min-w-[95px] items-center justify-center bg-[#59b0df] px-4 py-2 uppercase text-white disabled:opacity-60"
         >
           <Text as="span" size="xs" className="font-black uppercase text-white">
             {copyLetter}
@@ -259,6 +278,18 @@ function LetterPanel({
               {recipient}
             </Text>
           ))}
+          {ccRecipients && ccRecipients.length > 0 ? (
+            <>
+              <Text as="p" size="xs" className="mt-2 font-black text-[#444]">
+                CC:
+              </Text>
+              {ccRecipients.map((recipient) => (
+                <Text key={`cc-${recipient}`} as="p" size="xs" className="mt-1 text-[#444]">
+                  {recipient}
+                </Text>
+              ))}
+            </>
+          ) : null}
         </div>
       ) : null}
 
@@ -305,42 +336,32 @@ export default function FinalPage() {
     () => preview?.premierLetterBody ?? preview?.letterBody ?? SAMPLE_LETTER,
     [preview],
   );
-  const ministerRecipientEmails = useMemo(() => {
-    const provinceEmails = preview?.premierEmail
-      ? preview.premierEmail
-          .split(",")
-          .map((email) => email.trim())
-          .filter(Boolean)
-      : [];
-    const nonPremierProvinceEmails = provinceEmails.filter(
-      (email) => !email.toLowerCase().includes("premier@"),
-    );
-    const combined =
-      nonPremierProvinceEmails.length > 0
-        ? nonPremierProvinceEmails
-        : [preview?.ministerEmail ?? "marjorie.michel@parl.gc.ca"];
-    return Array.from(new Set(combined));
+  const ministerToEmails = useMemo(() => {
+    return ["marjorie.michel@parl.gc.ca"];
+  }, []);
+  const ministerCcEmails = useMemo(() => {
+    return preview?.mpEmail ? [preview.mpEmail] : [];
   }, [preview]);
-  const ministerRecipientLines = useMemo(() => {
-    return ministerRecipientEmails;
-  }, [ministerRecipientEmails]);
-  const premierRecipientLines = useMemo(() => {
+  const ministerRecipientLines = useMemo(() => ministerToEmails, [ministerToEmails]);
+  const ministerCcLines = useMemo(() => ministerCcEmails, [ministerCcEmails]);
+
+  const allPremierEmails = useMemo(() => {
     if (!preview?.premierEmail) return [];
     return preview.premierEmail
       .split(",")
       .map((email) => email.trim())
-      .filter(Boolean)
-      .filter((email) => email.toLowerCase().includes("premier@"));
+      .filter(Boolean);
   }, [preview]);
-  const premierRecipientEmails = useMemo(() => {
-    return preview?.premierEmail
-      ? preview.premierEmail
-          .split(",")
-          .map((email) => email.trim())
-          .filter(Boolean)
-          .filter((email) => email.toLowerCase().includes("premier@"))
-      : [];
-  }, [preview]);
+  const premierToEmails = useMemo(
+    () => allPremierEmails.filter((email) => email.toLowerCase().includes("premier@")),
+    [allPremierEmails],
+  );
+  const premierCcEmails = useMemo(
+    () => allPremierEmails.filter((email) => !email.toLowerCase().includes("premier@")),
+    [allPremierEmails],
+  );
+  const premierRecipientLines = useMemo(() => premierToEmails, [premierToEmails]);
+  const premierCcLines = useMemo(() => premierCcEmails, [premierCcEmails]);
 
   const saveSubmission = useCallback(async () => {
     if (!preview) return true;
@@ -446,6 +467,32 @@ export default function FinalPage() {
     }
   }
 
+  async function trackCopy(actionType: "minister_copy" | "mp_copy" | "premier_copy") {
+    const ok = await saveSubmission();
+    if (!ok || typeof window === "undefined") return false;
+    const submissionId = localStorage.getItem("campaign-submission-id");
+    if (!submissionId) return false;
+    const res = await fetch("/api/submissions/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        submissionId,
+        actionType,
+        province: preview?.province,
+        mpEmail: preview?.mpEmail,
+        mpName: preview?.mpName,
+        premierEmail: preview?.premierEmail,
+      }),
+    }).catch(() => null);
+    if (!res) return false;
+    try {
+      const data = (await res.json()) as { ok?: boolean; recorded?: boolean };
+      return Boolean(data.ok && data.recorded);
+    } catch {
+      return false;
+    }
+  }
+
   return (
     <main className="min-h-[calc(100vh-112px)] bg-[#e9e9e9]">
       <section className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-8 md:py-10">
@@ -493,9 +540,12 @@ export default function FinalPage() {
             copied={t.copied}
             body={ministerLetterBody}
             subjectLine={preview?.subjectLine}
-            recipientEmails={ministerRecipientEmails}
+            recipientEmails={ministerToEmails}
+            ccEmails={ministerCcEmails}
             recipients={ministerRecipientLines}
+            ccRecipients={ministerCcLines}
             sendToLabel={t.sendTo}
+            onCopy={() => trackCopy("minister_copy")}
           />
         </div>
 
@@ -510,9 +560,12 @@ export default function FinalPage() {
             copied={t.copied}
             body={premierLetterBody}
             subjectLine={preview?.premierSubjectLine}
-            recipientEmails={premierRecipientEmails}
+            recipientEmails={premierToEmails}
+            ccEmails={premierCcEmails}
             recipients={premierRecipientLines}
+            ccRecipients={premierCcLines}
             sendToLabel={t.sendTo}
+            onCopy={() => trackCopy("premier_copy")}
           />
         </div>
 

@@ -93,13 +93,12 @@ export const MINISTER_NAME_BY_PROVINCE: Partial<Record<string, string>> = {
   QC: "Sonia Belanger",
 };
 
-export function getMinisterGreeting(language: CampaignLanguage, province?: string) {
-  const code = (province ?? "").trim().toUpperCase();
-  const ministerName = MINISTER_NAME_BY_PROVINCE[code];
+export function getMinisterGreeting(language: CampaignLanguage, _province?: string) {
+  void _province;
   if (language === "fr") {
-    return ministerName ? `Cher Ministre ${ministerName},` : "Chere Ministre,";
+    return "Chere Ministre Michel,";
   }
-  return ministerName ? `Dear Minister ${ministerName},` : "Dear Minister,";
+  return "Dear Minister Michel,";
 }
 
 export const TOPICS: Topic[] = [
@@ -673,7 +672,7 @@ export function generateLetter(input: CampaignFormInput): string {
       `${getVariantText(ending, "fr")},`,
       `${input.firstName} ${input.lastName}`,
       `${input.city}, ${input.province}, ${input.postalCode}`,
-      input.mpEmail ? `CC : ${input.mpEmail}` : "",
+      ...(input.mpEmail ? ["", `CC : ${input.mpEmail}`] : []),
     ].join("\n");
   }
 
@@ -690,7 +689,7 @@ export function generateLetter(input: CampaignFormInput): string {
     `${getVariantText(ending, "en")},`,
     `${input.firstName} ${input.lastName}`,
     `${input.city}, ${input.province}, ${input.postalCode}`,
-    input.mpEmail ? `CC: ${input.mpEmail}` : "",
+    ...(input.mpEmail ? ["", `CC: ${input.mpEmail}`] : []),
   ].join("\n");
 }
 

@@ -12,6 +12,7 @@ export async function POST(request: Request) {
   const targetRaw = String(formData.get("target") ?? "all");
   const statusRaw = String(formData.get("status") ?? "all");
   const q = String(formData.get("q") ?? "").trim();
+  const recipient = String(formData.get("recipient") ?? "").trim();
   const idsRaw = String(formData.get("ids") ?? "").trim();
 
   const target =
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
       target,
       status,
       query: q,
+      recipient,
       limit: 1000,
     });
   }
