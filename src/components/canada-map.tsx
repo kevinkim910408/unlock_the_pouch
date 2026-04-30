@@ -114,16 +114,26 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
       .sort((a, b) => a._id.localeCompare(b._id));
   }, [sortedData]);
 
-  const rankedIds = useMemo(() => calculatedData.map((d) => d._id), [calculatedData]);
+  const rankByProvince = useMemo(() => {
+    const ranked = [...calculatedData]
+      .filter((row) => row.count > 0)
+      .sort((a, b) => b.calculatedValue - a.calculatedValue);
+    const rankMap = new Map<string, number>();
+    ranked.forEach((row, index) => {
+      rankMap.set(row._id, index + 1);
+    });
+    return rankMap;
+  }, [calculatedData]);
 
   const getMapFill = (provinceName: string) => {
     if (!toggle) {
       return submissionColor(mapByProvince.get(provinceName) ?? 0);
     }
-    const rank = rankedIds.indexOf(provinceName);
-    if (rank === 0) return "#0D3D12";
-    if (rank === 1) return "#2E7D32";
-    if (rank === 2) return "#66BB6A";
+    const rank = rankByProvince.get(provinceName);
+    if (!rank) return "#ffffff";
+    if (rank === 1) return "#0D3D12";
+    if (rank === 2) return "#2E7D32";
+    if (rank === 3) return "#66BB6A";
     return "#ffffff";
   };
 
@@ -238,7 +248,7 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
                       </td>
                       <td className="py-2 pr-2 text-right">
                         <Text as="span" size="xs">
-                          {i + 1}
+                          {rankByProvince.get(row._id) ?? "-"}
                         </Text>
                       </td>
                       <td className="py-2 pr-2 text-right">
