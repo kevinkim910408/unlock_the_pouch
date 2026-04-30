@@ -26,6 +26,22 @@ export const PROVINCES = [
   "YT",
 ] as const;
 
+export const PROVINCE_NAME_BY_CODE: Record<string, string> = {
+  AB: "Alberta",
+  BC: "British Columbia",
+  MB: "Manitoba",
+  NB: "New Brunswick",
+  NL: "Newfoundland and Labrador",
+  NS: "Nova Scotia",
+  NT: "Northwest Territories",
+  NU: "Nunavut",
+  ON: "Ontario",
+  PE: "Prince Edward Island",
+  QC: "Quebec",
+  SK: "Saskatchewan",
+  YT: "Yukon",
+};
+
 export const PREMIER_EMAIL_BY_PROVINCE: Partial<Record<string, string[]>> = {
   NL: ["LelaEvans@gov.nl.ca", "TonyWakeham@gov.nl.ca", "CraigPardy@gov.nl.ca"],
   PE: ["slacorn@gov.pe.ca", "premier@gov.pe.ca", "MinisterFinance@gov.pe.ca"],
@@ -450,8 +466,8 @@ type LetterVariant = {
 export const LETTER_OPENINGS: LetterVariant[] = [
   {
     id: "opening-default",
-    en: "My name is {name} and I live in the riding of {riding}. I am writing to you as a Canadian who wants better access to nicotine pouches. In 2024, then Minister of Health, made a ministerial order and had them placed behind the counter in Pharmacies. That change made it difficult for all Canadians to access. This makes no sense, when the harmful product is available at every gas station and corner store in the country. For those of us who have used these products as part of that transition, this shift has created confusion, inconsistency, and real barriers to access.",
-    fr: "Je m'appelle {name} et je reside dans la circonscription de {riding}. Je vous ecris en tant que Canadien souhaitant un meilleur acces aux sachets de nicotine. En 2024, le ministre de la Sante de l'epoque a pris un arrete ministeriel qui a relegue ces produits derriere le comptoir des pharmacies. Ce changement a rendu leur acces difficile pour l'ensemble des Canadiens. Cela n'a pas de sens, surtout lorsque le produit le plus nocif est disponible dans presque toutes les stations-service et depanneurs du pays. Pour ceux d'entre nous qui utilisent ces produits dans le cadre d'une transition loin du tabagisme, ce changement a cree de la confusion, de l'incoherence et de veritables obstacles a l'acces.",
+    en: "My name is {name} and I live in {location}. I am writing to you as a Canadian who wants better access to nicotine pouches. In 2024, then Minister of Health, made a ministerial order and had them placed behind the counter in Pharmacies. That change made it difficult for all Canadians to access. This makes no sense, when the harmful product is available at every gas station and corner store in the country. For those of us who have used these products as part of that transition, this shift has created confusion, inconsistency, and real barriers to access.",
+    fr: "Je m'appelle {name} et j'habite a {location}. Je vous ecris en tant que Canadien souhaitant un meilleur acces aux sachets de nicotine. En 2024, le ministre de la Sante de l'epoque a pris un arrete ministeriel qui a relegue ces produits derriere le comptoir des pharmacies. Ce changement a rendu leur acces difficile pour l'ensemble des Canadiens. Cela n'a pas de sens, surtout lorsque le produit le plus nocif est disponible dans presque toutes les stations-service et depanneurs du pays. Pour ceux d'entre nous qui utilisent ces produits dans le cadre d'une transition loin du tabagisme, ce changement a cree de la confusion, de l'incoherence et de veritables obstacles a l'acces.",
   },
 ];
 
@@ -558,14 +574,40 @@ function randomPick<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
+function toTitleCase(value: string) {
+  return value
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+export function getProvinceDisplayName(province?: string) {
+  const code = (province ?? "").trim().toUpperCase();
+  return PROVINCE_NAME_BY_CODE[code] ?? toTitleCase((province ?? "").trim());
+}
+
+export function formatCityProvince(city?: string, province?: string) {
+  const cityName = toTitleCase((city ?? "").trim());
+  const provinceName = getProvinceDisplayName(province);
+  if (cityName && provinceName) return `${cityName}, ${provinceName}`;
+  return cityName || provinceName || "";
+}
+
 function getVariantText(variant: LetterVariant, language: CampaignLanguage) {
   return language === "fr" ? variant.fr : variant.en;
 }
 
 function replaceTokens(value: string, input: CampaignFormInput) {
-  const fullName = `${input.firstName?.trim() ?? ""} ${input.lastName?.trim() ?? ""}`.trim();
-  const riding = input.mpRiding?.trim() || input.province?.trim() || "your riding";
-  return value.replaceAll("{name}", fullName).replaceAll("{riding}", riding);
+  const firstName = toTitleCase(input.firstName?.trim() ?? "");
+  const lastName = toTitleCase(input.lastName?.trim() ?? "");
+  const fullName = `${firstName} ${lastName}`.trim();
+  const location = formatCityProvince(input.city, input.province) || "your city";
+  return value
+    .replaceAll("{name}", fullName)
+    .replaceAll("{location}", location)
+    .replaceAll("{riding}", location);
 }
 
 function getByIdOrRandom(items: LetterVariant[], id?: string) {

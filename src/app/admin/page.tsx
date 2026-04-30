@@ -132,7 +132,7 @@ export default async function AdminPage({
   const printTargetRaw = single(params.target);
   const printStatusRaw = single(params.status);
   const printTarget =
-    printTargetRaw === "minister" || printTargetRaw === "mp" ? printTargetRaw : "all";
+    printTargetRaw === "minister" || printTargetRaw === "mp" ? printTargetRaw : "minister";
   const printStatus =
     printStatusRaw === "printed" ? "printed" : "pending";
   const printQuery = (single(params.q) ?? "").trim();
@@ -191,7 +191,7 @@ export default async function AdminPage({
           <TabLink href={tabHref("print")} label="Print" active={activeTab === "print"} />
           <TabLink
             href={tabHref("customers")}
-            label="Customer List"
+            label="Newsletter Subscriber"
             active={activeTab === "customers"}
           />
         </div>
@@ -437,7 +437,7 @@ export default async function AdminPage({
               </table>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 What They Want Topic Usage
               </Text>
@@ -475,7 +475,7 @@ export default async function AdminPage({
               </table>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 What They Want Variant Usage
               </Text>
@@ -520,7 +520,7 @@ export default async function AdminPage({
               </table>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 Topic Selections
               </Text>
@@ -558,7 +558,7 @@ export default async function AdminPage({
               </table>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 Why Important Topic Usage
               </Text>
@@ -596,7 +596,7 @@ export default async function AdminPage({
               </table>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 Why Important Variant Usage
               </Text>
@@ -641,7 +641,7 @@ export default async function AdminPage({
               </table>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 Opening Template Usage
               </Text>
@@ -679,7 +679,7 @@ export default async function AdminPage({
               </table>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 Ending Usage
               </Text>
@@ -717,7 +717,7 @@ export default async function AdminPage({
               </table>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 Subject Usage
               </Text>
@@ -755,7 +755,7 @@ export default async function AdminPage({
               </table>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto">
               <Text as="h2" size="sm" className="mb-3 font-black uppercase text-[#333]">
                 Premier Subject Usage
               </Text>
@@ -799,7 +799,7 @@ export default async function AdminPage({
           <div className="mt-8">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <Text as="h2" size="sm" className="font-black uppercase text-[#333]">
-                Customer List
+                Newsletter Subscriber
               </Text>
               <form className="flex flex-wrap gap-2" method="get">
                 <input type="hidden" name="tab" value="customers" />
@@ -826,6 +826,12 @@ export default async function AdminPage({
                 >
                   Apply
                 </button>
+                <a
+                  href={`/api/admin/customers/export?filter=${encodeURIComponent(customerFilter)}&sort=${encodeURIComponent(customerSort)}`}
+                  className="rounded bg-[#444] px-3 py-1 text-sm font-bold text-white"
+                >
+                  Export CSV
+                </a>
               </form>
             </div>
 
@@ -843,7 +849,7 @@ export default async function AdminPage({
                     <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Province</th>
                     <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">City</th>
                     <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Postal Code</th>
-                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-center">Subscriber</th>
+                    <th className="border-b border-[#d9d9d9] px-2 py-2 text-center">Subscribed?</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -896,18 +902,32 @@ export default async function AdminPage({
                   Printed
                 </a>
               </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/admin?tab=print&status=${printStatus}&target=minister${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  className={`rounded px-3 py-1 text-sm font-bold ${
+                    printTarget === "minister"
+                      ? "bg-[#59b0df] text-white"
+                      : "bg-[#e4e4e4] text-[#444]"
+                  }`}
+                >
+                  Minister
+                </a>
+                <a
+                  href={`/admin?tab=print&status=${printStatus}&target=mp${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  className={`rounded px-3 py-1 text-sm font-bold ${
+                    printTarget === "mp"
+                      ? "bg-[#59b0df] text-white"
+                      : "bg-[#e4e4e4] text-[#444]"
+                  }`}
+                >
+                  MP
+                </a>
+              </div>
               <form className="flex flex-wrap gap-2" method="get">
                 <input type="hidden" name="tab" value="print" />
                 <input type="hidden" name="status" value={printStatus} />
-                <select
-                  name="target"
-                  defaultValue={printTarget}
-                  className="rounded border border-[#cfcfcf] bg-white px-2 py-1 text-sm"
-                >
-                  <option value="all">All (Minister + MP)</option>
-                  <option value="minister">Minister</option>
-                  <option value="mp">MP</option>
-                </select>
+                <input type="hidden" name="target" value={printTarget} />
                 <input
                   type="text"
                   name="q"
@@ -919,7 +939,7 @@ export default async function AdminPage({
                   type="text"
                   name="recipient"
                   defaultValue={printRecipient}
-                  placeholder={printTarget === "mp" ? "MP name" : "Recipient name"}
+                  placeholder={printTarget === "mp" ? "MP name" : "Name"}
                   className="rounded border border-[#cfcfcf] bg-white px-2 py-1 text-sm"
                 />
                 <button
@@ -949,4 +969,3 @@ export default async function AdminPage({
     </main>
   );
 }
-

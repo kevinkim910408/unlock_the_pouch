@@ -79,7 +79,7 @@ const COPY: Record<CampaignLanguage, Copy> = {
       "By submitting this form, you authorize us to mail your letter to the government.",
     sendPhysical: "Send physical letter",
     physicalDone: "Thank you! Your letter will be mailed to the government.",
-    digitalTitle: "Send a digital copy of your letter to the government :",
+    digitalTitle: "Send a digital copy of your letter to the Federal Government :",
     premierTitle: "Send a letter to your Premier",
     step1: "STEP 1",
     step2: "STEP 2",
@@ -102,7 +102,7 @@ const COPY: Record<CampaignLanguage, Copy> = {
     sendPhysical: "Envoyer la lettre physique",
     physicalDone: "Merci! Votre lettre sera postee au gouvernement.",
     digitalTitle:
-      "Envoyer une copie numerique de votre lettre au gouvernement :",
+      "Envoyer une copie numerique de votre lettre au gouvernement federal :",
     premierTitle: "Envoyer une lettre a votre premier ministre provincial",
     step1: "ETAPE 1",
     step2: "ETAPE 2",

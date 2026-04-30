@@ -30,7 +30,7 @@ export default async function AdminPrintPreviewPage({
   const idsRaw = (single(params.ids) ?? "").trim();
 
   const target =
-    targetRaw === "minister" || targetRaw === "mp" ? targetRaw : "all";
+    targetRaw === "minister" || targetRaw === "mp" ? targetRaw : "minister";
   const status =
     statusRaw === "pending" || statusRaw === "printed" ? statusRaw : "all";
 
@@ -48,7 +48,7 @@ export default async function AdminPrintPreviewPage({
       <div className="admin-print-only">
         {rows.map((row) => (
           <div key={String(row._id)}>
-            {(target === "all" || target === "minister") && (
+            {target === "minister" && (
               <section className="admin-print-letter">
                 <pre
                   style={{
@@ -63,7 +63,7 @@ export default async function AdminPrintPreviewPage({
               </section>
             )}
 
-            {(target === "all" || target === "mp") && row.mpEmail && (
+            {target === "mp" && row.mpEmail && (
               <section className="admin-print-letter">
                 <pre
                   style={{

@@ -9,6 +9,7 @@ import {
   getMinisterGreeting,
   LETTER_ENDINGS,
   PREMIER_EMAIL_BY_PROVINCE,
+  formatCityProvince,
   generateLetter,
   pickDesiredTopicVariant,
   pickImportantTopicVariant,
@@ -245,7 +246,11 @@ function TopicsPageClient() {
           body: JSON.stringify({
             language,
             name: `${String(formInfo.firstName ?? "")} ${String(formInfo.lastName ?? "")}`.trim(),
-            riding: mpRiding ?? String(formInfo.province ?? ""),
+            riding:
+              formatCityProvince(
+                String(formInfo.city ?? ""),
+                String(formInfo.province ?? ""),
+              ) || String(formInfo.province ?? ""),
             topics: selectedTopics,
           }),
         });

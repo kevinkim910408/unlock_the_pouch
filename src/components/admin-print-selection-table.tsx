@@ -11,6 +11,7 @@ type PrintRow = {
   email: string;
   province: string;
   mpEmail?: string;
+  mpName?: string;
   letterBody: string;
   mpLetterBody?: string;
   premierLetterBody?: string;
@@ -20,7 +21,7 @@ type PrintRow = {
 
 type Props = {
   rows: PrintRow[];
-  target: "all" | "minister" | "mp";
+  target: "minister" | "mp";
   status: "all" | "pending" | "printed";
   query: string;
   recipient: string;
@@ -35,7 +36,7 @@ function formatDate(value: Date | string | undefined) {
 
 export default function AdminPrintSelectionTable({ rows, target, status, query, recipient }: Props) {
   const ids = useMemo(() => rows.map((row) => String(row._id)), [rows]);
-  const [selected, setSelected] = useState<string[]>(ids);
+  const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const allSelected = ids.length > 0 && ids.every((id) => selected.includes(id));
@@ -99,14 +100,14 @@ export default function AdminPrintSelectionTable({ rows, target, status, query, 
           .filter((row) => selected.includes(String(row._id)))
           .map((row) => (
             <div key={`print-${String(row._id)}`}>
-              {(target === "all" || target === "minister") && (
+              {target === "minister" && (
                 <section className="admin-print-letter">
                   <pre className="whitespace-pre-wrap text-[12px] leading-[1.55] text-black">
                     {row.letterBody}
                   </pre>
                 </section>
               )}
-              {(target === "all" || target === "mp") && row.mpEmail ? (
+              {target === "mp" && row.mpEmail ? (
                 <section className="admin-print-letter">
                   <pre className="whitespace-pre-wrap text-[12px] leading-[1.55] text-black">
                     {row.mpLetterBody ?? row.letterBody}
@@ -133,6 +134,8 @@ export default function AdminPrintSelectionTable({ rows, target, status, query, 
               <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Name</th>
               <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Email</th>
               <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Province</th>
+              <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Letter Type</th>
+              <th className="border-b border-[#d9d9d9] px-2 py-2 text-left">Recipient Name</th>
             </tr>
           </thead>
           <tbody>
@@ -159,6 +162,12 @@ export default function AdminPrintSelectionTable({ rows, target, status, query, 
                   </td>
                   <td className="border-b border-[#eeeeee] px-2 py-2 align-top">{row.email}</td>
                   <td className="border-b border-[#eeeeee] px-2 py-2 align-top">{row.province}</td>
+                  <td className="border-b border-[#eeeeee] px-2 py-2 align-top">
+                    {target === "minister" ? "Minister" : "MP"}
+                  </td>
+                  <td className="border-b border-[#eeeeee] px-2 py-2 align-top">
+                    {target === "minister" ? "Marjorie Michel" : row.mpName ?? "-"}
+                  </td>
                 </tr>
               );
             })}

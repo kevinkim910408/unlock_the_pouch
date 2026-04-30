@@ -33,7 +33,7 @@ The writing should feel like it comes from a real constituent, not an organizati
 Content:
 
 Begin with a natural, human-sounding introduction that clearly includes:
-"My name is ${name} and I live in the riding of ${riding}"
+"My name is ${name} and I live in ${riding}"
 A personal expression of concern about access to nicotine pouches in Canada
 Rewrite the following ideas in a more natural and human way, without copying phrasing directly:
 A 2024 ministerial order moved nicotine pouches behind pharmacy counters
@@ -92,7 +92,7 @@ Introduction:
 
 Begin with a natural and human rewrite of the following opening. Do not copy it directly, but preserve all key ideas and meaning:
 
-Je m’appelle {inserer le nom} et je reside dans la circonscription de {inserer la circonscription}. Je vous ecris en tant que Canadien souhaitant un meilleur acces aux sachets de nicotine. En 2024, le ministre de la Sante de l’epoque a pris un arrete ministeriel qui a relegue ces produits derriere le comptoir des pharmacies. Ce changement a rendu leur acces difficile pour l’ensemble des Canadiens.
+Je m’appelle {inserer le nom} et j’habite a {inserer la circonscription}. Je vous ecris en tant que Canadien souhaitant un meilleur acces aux sachets de nicotine. En 2024, le ministre de la Sante de l’epoque a pris un arrete ministeriel qui a relegue ces produits derriere le comptoir des pharmacies. Ce changement a rendu leur acces difficile pour l’ensemble des Canadiens.
 
 Cela n’a pas de sens, surtout lorsque le produit le plus nocif est disponible dans presque toutes les stations-service et depanneurs du pays. Pour ceux d’entre nous qui utilisent ces produits dans le cadre d’une transition loin du tabagisme, ce changement a cree de la confusion, de l’incoherence et de veritables obstacles a l’acces.
 
