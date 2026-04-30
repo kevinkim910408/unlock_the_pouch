@@ -13,6 +13,7 @@ type CalcData = {
 };
 
 const numberFmt = (value: number) => value.toLocaleString();
+const PHYSICAL_LETTERS_PER_SUBMISSION = 2;
 
 const colorRanges = [
   { bg: "#e0e0e0", text: "0" },
@@ -96,9 +97,11 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
       .sort((a, b) => a._id.localeCompare(b._id));
   }, [provinceStats]);
 
-  const mapByProvince = useMemo(() => {
+  const lettersByProvince = useMemo(() => {
     const dictionary = new Map<string, number>();
-    sortedData.forEach((item) => dictionary.set(item._id, item.count));
+    sortedData.forEach((item) =>
+      dictionary.set(item._id, item.count * PHYSICAL_LETTERS_PER_SUBMISSION),
+    );
     return dictionary;
   }, [sortedData]);
 
@@ -129,7 +132,7 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
 
   const getMapFill = (provinceName: string) => {
     if (!toggle) {
-      return submissionColor(mapByProvince.get(provinceName) ?? 0);
+      return submissionColor(lettersByProvince.get(provinceName) ?? 0);
     }
     const rank = rankByProvince.get(provinceName);
     if (!rank) return "#e0e0e0";
@@ -190,7 +193,7 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
                         {isFr ? "Province" : "Province"}
                       </Text>
                     </th>
-                    <th className="py-2">
+                    <th className="py-2 text-right">
                       <Text as="span" size="xs">
                         {isFr ? "Soumissions" : "Submissions"}
                       </Text>
@@ -207,7 +210,7 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
                       </td>
                       <td className="py-2 text-right">
                         <Text as="span" size="xs">
-                          {numberFmt(row.count)}
+                          {numberFmt(row.count * PHYSICAL_LETTERS_PER_SUBMISSION)}
                         </Text>
                       </td>
                     </tr>

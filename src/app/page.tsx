@@ -94,10 +94,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   let total = 0;
   let provinceStats: { province: string; count: number }[] = [];
+  const PHYSICAL_LETTERS_PER_SUBMISSION = 2;
 
   try {
     const stats = await getSubmissionStats();
-    total = stats.total;
+    total = stats.total * PHYSICAL_LETTERS_PER_SUBMISSION;
     provinceStats = stats.provinceStats;
   } catch {
     // Keep page usable even when DB is missing in local dev.
