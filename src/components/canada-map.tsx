@@ -108,12 +108,13 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
   const calculatedData: CalcData[] = useMemo(() => {
     return sortedData
       .map((item) => {
+        const letterCount = item.count * PHYSICAL_LETTERS_PER_SUBMISSION;
         const population = populationCanada.find((p) => p.name === item._id)?.ppl ?? 0;
         return {
           _id: item._id,
-          count: item.count,
+          count: letterCount,
           population,
-          calculatedValue: population ? (item.count / population) * 100 : 0,
+          calculatedValue: population ? (letterCount / population) * 100 : 0,
         };
       })
       .sort((a, b) => a._id.localeCompare(b._id));
