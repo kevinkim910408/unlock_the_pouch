@@ -78,13 +78,18 @@ function normalizeProvinceName(value: string) {
 export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
   const [toggle, setToggle] = useState(false);
   const isFr = language === "fr";
+  const PHYSICAL_LETTERS_PER_SUBMISSION = 2;
 
   const sortedData = useMemo(() => {
     const byName = new Map<string, number>();
 
     provinceStats.forEach((row) => {
       const provinceName = normalizeProvinceName(row.province);
-      byName.set(provinceName, (byName.get(provinceName) ?? 0) + row.count);
+      byName.set(
+        provinceName,
+        (byName.get(provinceName) ?? 0) +
+          row.count * PHYSICAL_LETTERS_PER_SUBMISSION,
+      );
     });
 
     const allProvinces = populationCanada.map((p) => p.name);
