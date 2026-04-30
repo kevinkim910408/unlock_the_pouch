@@ -15,7 +15,8 @@ type CalcData = {
 const numberFmt = (value: number) => value.toLocaleString();
 
 const colorRanges = [
-  { bg: "#E8F5E9", text: "0 - 500" },
+  { bg: "#e0e0e0", text: "0" },
+  { bg: "#E8F5E9", text: "1 - 500" },
   { bg: "#C8E6C9", text: "501 - 1000" },
   { bg: "#A5D6A7", text: "1001 - 1500" },
   { bg: "#81C784", text: "1501 - 2000" },
@@ -34,6 +35,7 @@ const rankColors = [
 ];
 
 const submissionColor = (count: number) => {
+  if (count === 0) return "#e0e0e0";
   if (count >= 4501) return "#0D3D12";
   if (count >= 4001) return "#1B5E20";
   if (count >= 3501) return "#2E7D32";
@@ -130,11 +132,11 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
       return submissionColor(mapByProvince.get(provinceName) ?? 0);
     }
     const rank = rankByProvince.get(provinceName);
-    if (!rank) return "#ffffff";
+    if (!rank) return "#e0e0e0";
     if (rank === 1) return "#0D3D12";
     if (rank === 2) return "#2E7D32";
     if (rank === 3) return "#66BB6A";
-    return "#ffffff";
+    return "#e0e0e0";
   };
 
   return (
