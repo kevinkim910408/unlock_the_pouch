@@ -13,7 +13,6 @@ type CalcData = {
 };
 
 const numberFmt = (value: number) => value.toLocaleString();
-const PHYSICAL_LETTERS_PER_SUBMISSION = 2;
 
 const colorRanges = [
   { bg: "#e0e0e0", text: "0" },
@@ -97,24 +96,21 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
       .sort((a, b) => a._id.localeCompare(b._id));
   }, [provinceStats]);
 
-  const lettersByProvince = useMemo(() => {
+  const mapByProvince = useMemo(() => {
     const dictionary = new Map<string, number>();
-    sortedData.forEach((item) =>
-      dictionary.set(item._id, item.count * PHYSICAL_LETTERS_PER_SUBMISSION),
-    );
+    sortedData.forEach((item) => dictionary.set(item._id, item.count));
     return dictionary;
   }, [sortedData]);
 
   const calculatedData: CalcData[] = useMemo(() => {
     return sortedData
       .map((item) => {
-        const letterCount = item.count * PHYSICAL_LETTERS_PER_SUBMISSION;
         const population = populationCanada.find((p) => p.name === item._id)?.ppl ?? 0;
         return {
           _id: item._id,
-          count: letterCount,
+          count: item.count,
           population,
-          calculatedValue: population ? (letterCount / population) * 100 : 0,
+          calculatedValue: population ? (item.count / population) * 100 : 0,
         };
       })
       .sort((a, b) => a._id.localeCompare(b._id));
@@ -133,7 +129,7 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
 
   const getMapFill = (provinceName: string) => {
     if (!toggle) {
-      return submissionColor(lettersByProvince.get(provinceName) ?? 0);
+      return submissionColor(mapByProvince.get(provinceName) ?? 0);
     }
     const rank = rankByProvince.get(provinceName);
     if (!rank) return "#e0e0e0";
@@ -211,7 +207,7 @@ export default function CanadaMap({ language, provinceStats }: CanadaMapProps) {
                       </td>
                       <td className="py-2 text-right">
                         <Text as="span" size="xs">
-                          {numberFmt(row.count * PHYSICAL_LETTERS_PER_SUBMISSION)}
+                          {numberFmt(row.count)}
                         </Text>
                       </td>
                     </tr>
