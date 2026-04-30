@@ -26,6 +26,7 @@ type SearchParams = Promise<{
   status?: string | string[];
   q?: string | string[];
   recipient?: string | string[];
+  lang?: string | string[];
   error?: string | string[];
 }>;
 
@@ -137,6 +138,8 @@ export default async function AdminPage({
     printStatusRaw === "printed" ? "printed" : "pending";
   const printQuery = (single(params.q) ?? "").trim();
   const printRecipient = (single(params.recipient) ?? "").trim();
+  const langRaw = single(params.lang);
+  const activeLanguage = langRaw === "en" || langRaw === "fr" ? langRaw : "all";
   type PrintSubmissionRow = CampaignSubmission;
 
   const [stats, topicStats, importantTopicStats, emailActionStats, customers, printRows] = await Promise.all([
@@ -163,6 +166,7 @@ export default async function AdminPage({
           status: printStatus,
           query: printQuery,
           recipient: printRecipient,
+          language: activeLanguage,
           limit: 1000,
         })
       : Promise.resolve([] as PrintSubmissionRow[]),
@@ -882,7 +886,7 @@ export default async function AdminPage({
               </Text>
               <div className="flex items-center gap-2">
                 <a
-                  href={`/admin?tab=print&status=pending&target=${printTarget}${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  href={`/admin?tab=print&status=pending&target=${printTarget}&lang=${activeLanguage}${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
                   className={`rounded px-3 py-1 text-sm font-bold ${
                     printStatus === "pending"
                       ? "bg-[#59b0df] text-white"
@@ -892,7 +896,7 @@ export default async function AdminPage({
                   Unprinted
                 </a>
                 <a
-                  href={`/admin?tab=print&status=printed&target=${printTarget}${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  href={`/admin?tab=print&status=printed&target=${printTarget}&lang=${activeLanguage}${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
                   className={`rounded px-3 py-1 text-sm font-bold ${
                     printStatus === "printed"
                       ? "bg-[#59b0df] text-white"
@@ -904,7 +908,39 @@ export default async function AdminPage({
               </div>
               <div className="flex items-center gap-2">
                 <a
-                  href={`/admin?tab=print&status=${printStatus}&target=minister${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  href={`/admin?tab=print&status=${printStatus}&target=${printTarget}&lang=all${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  className={`rounded px-3 py-1 text-sm font-bold ${
+                    activeLanguage === "all"
+                      ? "bg-[#59b0df] text-white"
+                      : "bg-[#e4e4e4] text-[#444]"
+                  }`}
+                >
+                  All
+                </a>
+                <a
+                  href={`/admin?tab=print&status=${printStatus}&target=${printTarget}&lang=en${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  className={`rounded px-3 py-1 text-sm font-bold ${
+                    activeLanguage === "en"
+                      ? "bg-[#59b0df] text-white"
+                      : "bg-[#e4e4e4] text-[#444]"
+                  }`}
+                >
+                  EN
+                </a>
+                <a
+                  href={`/admin?tab=print&status=${printStatus}&target=${printTarget}&lang=fr${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  className={`rounded px-3 py-1 text-sm font-bold ${
+                    activeLanguage === "fr"
+                      ? "bg-[#59b0df] text-white"
+                      : "bg-[#e4e4e4] text-[#444]"
+                  }`}
+                >
+                  FR
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/admin?tab=print&status=${printStatus}&target=minister&lang=${activeLanguage}${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
                   className={`rounded px-3 py-1 text-sm font-bold ${
                     printTarget === "minister"
                       ? "bg-[#59b0df] text-white"
@@ -914,7 +950,7 @@ export default async function AdminPage({
                   Minister
                 </a>
                 <a
-                  href={`/admin?tab=print&status=${printStatus}&target=mp${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
+                  href={`/admin?tab=print&status=${printStatus}&target=mp&lang=${activeLanguage}${printQuery ? `&q=${encodeURIComponent(printQuery)}` : ""}${printRecipient ? `&recipient=${encodeURIComponent(printRecipient)}` : ""}`}
                   className={`rounded px-3 py-1 text-sm font-bold ${
                     printTarget === "mp"
                       ? "bg-[#59b0df] text-white"
@@ -928,6 +964,7 @@ export default async function AdminPage({
                 <input type="hidden" name="tab" value="print" />
                 <input type="hidden" name="status" value={printStatus} />
                 <input type="hidden" name="target" value={printTarget} />
+                <input type="hidden" name="lang" value={activeLanguage} />
                 <input
                   type="text"
                   name="q"

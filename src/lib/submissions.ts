@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/mongodb";
-import { CampaignSubmission, ProvinceStat } from "@/types/campaign";
+import { CampaignLanguage, CampaignSubmission, ProvinceStat } from "@/types/campaign";
 import { Filter, ObjectId, Sort } from "mongodb";
 
 const SUBMISSIONS_COLLECTION = "users";
@@ -62,14 +62,28 @@ export async function getSubmissionsForStats(options?: {
   return collection.find(query).sort(sortByCreatedAt).limit(limit).toArray();
 }
 
-export async function getSubmissionStats() {
+type LanguageFilter = "all" | CampaignLanguage;
+
+function applyLanguageQuery(
+  query: Filter<CampaignSubmission>,
+  language?: LanguageFilter,
+) {
+  if (language === "en" || language === "fr") {
+    query.language = language;
+  }
+}
+
+export async function getSubmissionStats(language: LanguageFilter = "all") {
   const db = await getDb();
   const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
+  const query: Filter<CampaignSubmission> = {};
+  applyLanguageQuery(query, language);
 
   const [total, provinceStats] = await Promise.all([
-    collection.countDocuments(),
+    collection.countDocuments(query),
     collection
       .aggregate<ProvinceStat>([
+        ...(query.language ? [{ $match: { language: query.language } }] : []),
         { $group: { _id: "$province", count: { $sum: 1 } } },
         { $project: { _id: 0, province: "$_id", count: 1 } },
         { $sort: { count: -1 } },
@@ -205,13 +219,16 @@ function buildPrintQuery(options?: {
   status?: PrintFilter;
   query?: string;
   recipient?: string;
+  language?: LanguageFilter;
 }) {
   const target = options?.target ?? "all";
   const status = options?.status ?? "all";
   const queryText = options?.query?.trim();
   const recipient = options?.recipient?.trim();
+  const language = options?.language ?? "all";
 
   const query: Filter<CampaignSubmission> = {};
+  applyLanguageQuery(query, language);
   if (queryText) {
     const n = Number(queryText);
     if (!Number.isNaN(n)) {
@@ -267,6 +284,7 @@ export async function getPrintSubmissions(options?: {
   status?: PrintFilter;
   query?: string;
   recipient?: string;
+  language?: LanguageFilter;
   limit?: number;
 }) {
   const db = await getDb();
@@ -283,6 +301,7 @@ export async function getPrintSubmissionIds(options?: {
   status?: PrintFilter;
   query?: string;
   recipient?: string;
+  language?: LanguageFilter;
   limit?: number;
 }) {
   const db = await getDb();
@@ -426,9 +445,11 @@ export async function recordSubmissionEmailAction(input: {
   return { ok: false as const, reason: "submission_not_found" as const };
 }
 
-export async function getEmailActionStats() {
+export async function getEmailActionStats(language: LanguageFilter = "all") {
   const db = await getDb();
   const collection = db.collection<CampaignSubmission>(SUBMISSIONS_COLLECTION);
+  const langMatch =
+    language === "en" || language === "fr" ? [{ $match: { language } }] : [];
 
   const [
     peopleSentToMpByMp,
@@ -439,6 +460,7 @@ export async function getEmailActionStats() {
   ] = await Promise.all([
     collection
       .aggregate<{ key: string; count: number }>([
+        ...langMatch,
         { $unwind: "$emailActions" },
         { $match: { "emailActions.actionType": "minister_copy" } },
         {
@@ -464,6 +486,7 @@ export async function getEmailActionStats() {
       .toArray(),
     collection
       .aggregate<{ key: string; count: number }>([
+        ...langMatch,
         { $unwind: "$emailActions" },
         { $match: { "emailActions.actionType": "minister_copy" } },
         {
@@ -478,6 +501,7 @@ export async function getEmailActionStats() {
       .toArray(),
     collection
       .aggregate<{ key: string; count: number }>([
+        ...langMatch,
         { $unwind: "$emailActions" },
         { $match: { "emailActions.actionType": "premier_copy" } },
         {
@@ -501,6 +525,7 @@ export async function getEmailActionStats() {
       .toArray(),
     collection
       .aggregate<{ key: string; count: number }>([
+        ...langMatch,
         { $unwind: "$emailActions" },
         { $match: { "emailActions.actionType": { $in: ["minister_copy", "premier_copy"] } } },
         {
@@ -515,6 +540,7 @@ export async function getEmailActionStats() {
       .toArray(),
     collection
       .aggregate<{ key: string; count: number }>([
+        ...langMatch,
         {
           $group: {
             _id: { $concat: [{ $ifNull: ["$mpName", "Unknown MP"] }, " (", { $ifNull: ["$mpEmail", "unknown@email"] }, ")"] },
