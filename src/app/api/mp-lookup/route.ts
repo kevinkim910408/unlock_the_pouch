@@ -28,6 +28,14 @@ type CacheValue = {
 const REPRESENT_BASE_URL = "https://represent.opennorth.ca";
 const CACHE_TTL_MS = 1000 * 60 * 60 * 12;
 const mpLookupCache = new Map<string, CacheValue>();
+const BILL_BLAIR_EMAIL = "bill.blair@parl.gc.ca";
+const BILL_BLAIR_NAME = "bill blair";
+const CHRYSTIA_FREELAND_EMAIL = "chrystia.freeland@parl.gc.ca";
+const CHRYSTIA_FREELAND_NAME = "chrystia freeland";
+const DOLY_BEGUM_EMAIL = "doly.begum@parl.gc.ca";
+const DOLY_BEGUM_NAME = "Doly Begum";
+const DANIELLE_MARTIN_EMAIL = "danielle.martin@parl.gc.ca";
+const DANIELLE_MARTIN_NAME = "Danielle Martin";
 
 function normalizePostalCode(value: string) {
   return value.toUpperCase().replace(/\s+/g, "");
@@ -50,6 +58,36 @@ function pickMp(list: Representative[], source: "concordance" | "centroid") {
     districtName: chosen.district_name,
     source,
   } satisfies MpResult;
+}
+
+function remapIncorrectMp(mp: MpResult | null) {
+  if (!mp) return mp;
+
+  const normalizedEmail = mp.email?.trim().toLowerCase();
+  const normalizedName = mp.name.trim().toLowerCase();
+  const isBillBlair =
+    normalizedEmail === BILL_BLAIR_EMAIL || normalizedName === BILL_BLAIR_NAME;
+  const isChrystiaFreeland =
+    normalizedEmail === CHRYSTIA_FREELAND_EMAIL ||
+    normalizedName === CHRYSTIA_FREELAND_NAME;
+
+  if (isBillBlair) {
+    return {
+      ...mp,
+      name: DOLY_BEGUM_NAME,
+      email: DOLY_BEGUM_EMAIL,
+    } satisfies MpResult;
+  }
+
+  if (isChrystiaFreeland) {
+    return {
+      ...mp,
+      name: DANIELLE_MARTIN_NAME,
+      email: DANIELLE_MARTIN_EMAIL,
+    } satisfies MpResult;
+  }
+
+  return mp;
 }
 
 async function fetchByPostalCode(postalCode: string) {
@@ -78,8 +116,9 @@ async function fetchByPostalCode(postalCode: string) {
       ? data.representatives_centroid
       : [];
 
-    const mp =
-      pickMp(concordance, "concordance") ?? pickMp(centroid, "centroid");
+    const mp = remapIncorrectMp(
+      pickMp(concordance, "concordance") ?? pickMp(centroid, "centroid"),
+    );
 
     return mp;
   } finally {
