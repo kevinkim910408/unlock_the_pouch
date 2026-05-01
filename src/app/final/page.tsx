@@ -141,6 +141,8 @@ function ProviderRow({ mailtoHref }: { mailtoHref: string }) {
         <a
           key={provider.name}
           href={mailtoHref}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex h-14 w-28 flex-col items-center justify-center gap-1 bg-transparent text-[#555]"
         >
           <Image
@@ -226,9 +228,13 @@ function LetterPanel({
       maybeBodyValue.includes("+") || /%[0-9a-fA-F]{2}/.test(maybeBodyValue);
     if (!looksEncoded) return input;
     try {
-      const decoded = decodeURIComponent(maybeBodyValue.replaceAll("+", " "));
+      const safePercentEncoded = maybeBodyValue.replace(/%(?![0-9a-fA-F]{2})/g, "%25");
+      const decoded = decodeURIComponent(safePercentEncoded.replaceAll("+", " "));
       return decoded.trim().length > 0 ? decoded : input;
     } catch {
+      if (maybeBodyValue.includes("+")) {
+        return maybeBodyValue.replaceAll("+", " ");
+      }
       return input;
     }
   }
