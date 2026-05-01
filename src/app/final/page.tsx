@@ -77,7 +77,7 @@ const COPY: Record<CampaignLanguage, Copy> = {
     physicalTitle: "Physical Letter Submission",
     consent:
       "By submitting this form, you authorize us to mail your letter to the government.",
-    sendPhysical: "Send physical letter",
+    sendPhysical: "Check here to Send Physical Letter",
     physicalDone: "Thank you! Your letter will be mailed to the government.",
     digitalTitle: "Send a digital copy of your letter to the Federal Government :",
     premierTitle: "Send a letter to your Premier",
@@ -204,9 +204,53 @@ function LetterPanel({
   }
   const mailtoHref = `mailto:${recipientEmails.join(",")}?${params.toString()}`;
 
+  function escapeHtml(input: string) {
+    return input
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function buildClipboardHtml(input: string) {
+    const normalized = input.replace(/\r\n/g, "\n");
+    const lines = normalized.split("\n").map((line) => (line.length > 0 ? escapeHtml(line) : "<br>"));
+    return `<div>${lines.join("</div><div>")}</div>`;
+  }
+
+  function decodeUrlEncodedBodyIfNeeded(input: string) {
+    const trimmed = input.trim();
+    const maybeBodyValue = trimmed.startsWith("body=") ? trimmed.slice(5) : trimmed;
+    const looksEncoded =
+      maybeBodyValue.includes("+") || /%[0-9a-fA-F]{2}/.test(maybeBodyValue);
+    if (!looksEncoded) return input;
+    try {
+      const decoded = decodeURIComponent(maybeBodyValue.replaceAll("+", " "));
+      return decoded.trim().length > 0 ? decoded : input;
+    } catch {
+      return input;
+    }
+  }
+
   async function handleCopyLetter() {
     try {
-      await navigator.clipboard.writeText(body);
+      const normalizedBody = decodeUrlEncodedBodyIfNeeded(body).replace(/\r\n/g, "\n");
+      const clipboardItemSupported =
+        typeof window !== "undefined" &&
+        typeof ClipboardItem !== "undefined" &&
+        typeof navigator.clipboard.write === "function";
+
+      if (clipboardItemSupported) {
+        const html = buildClipboardHtml(normalizedBody);
+        const item = new ClipboardItem({
+          "text/plain": new Blob([normalizedBody], { type: "text/plain" }),
+          "text/html": new Blob([html], { type: "text/html" }),
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        await navigator.clipboard.writeText(normalizedBody);
+      }
       if (onCopy) {
         const recorded = await onCopy();
         if (!recorded) {
