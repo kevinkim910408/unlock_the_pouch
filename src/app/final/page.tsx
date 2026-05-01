@@ -198,13 +198,18 @@ function LetterPanel({
 }: LetterPanelProps) {
   const [copySuccess, setCopySuccess] = useState(false);
   const [copyLocked, setCopyLocked] = useState(false);
-  const params = new URLSearchParams();
-  params.set("subject", subjectLine ?? "");
-  params.set("body", body);
-  if (ccEmails && ccEmails.length > 0) {
-    params.set("cc", ccEmails.join(","));
+  function encodeMailtoValue(value: string) {
+    return encodeURIComponent(value);
   }
-  const mailtoHref = `mailto:${recipientEmails.join(",")}?${params.toString()}`;
+
+  const mailtoQueryParts = [
+    `subject=${encodeMailtoValue(subjectLine ?? "")}`,
+    `body=${encodeMailtoValue(body.replace(/\r\n/g, "\n"))}`,
+    ...(ccEmails && ccEmails.length > 0
+      ? [`cc=${encodeMailtoValue(ccEmails.join(","))}`]
+      : []),
+  ];
+  const mailtoHref = `mailto:${recipientEmails.join(",")}?${mailtoQueryParts.join("&")}`;
 
   function escapeHtml(input: string) {
     return input
