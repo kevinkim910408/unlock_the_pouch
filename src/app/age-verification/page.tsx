@@ -26,7 +26,7 @@ export default function AgeVerificationPage() {
             size="md"
             className="mt-4 font-black uppercase text-white"
           >
-            Déverrouillez la SACHETS
+            DÉVERROUILLEZ LE SACHET
           </Text>
           <Text
             as="p"
