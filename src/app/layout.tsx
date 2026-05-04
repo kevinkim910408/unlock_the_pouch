@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Unlock the Pouch",
   description: "Campaign letter generation site",
+  icons: {
+    icon: "/Logo.svg",
+    shortcut: "/Logo.svg",
+  },
   openGraph: {
     title: "Unlock the Pouch",
     description: "Campaign letter generation site",
