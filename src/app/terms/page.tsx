@@ -10,7 +10,9 @@ const CONTENT: Record<
   {
     title: string;
     label: string;
-    consent: string;
+    consentPrefix: string;
+    consentPrivacyLabel: string;
+    consentSuffix: string;
     back: string;
     accept: string;
   }
@@ -18,16 +20,20 @@ const CONTENT: Record<
   en: {
     title: "Terms and conditions",
     label: "Terms and conditions:",
-    consent:
-      "By using this Rights4Vapers tool, you acknowledge that you have read and accepted these Terms and Conditions.",
+    consentPrefix:
+      "By using this Rights4Vapers tool, you acknowledge that you have read and accepted these Terms and Conditions and the ",
+    consentPrivacyLabel: "Privacy Policy",
+    consentSuffix: ".",
     back: "Back",
     accept: "Accept",
   },
   fr: {
     title: "Termes et conditions",
     label: "Termes et conditions:",
-    consent:
-      "En utilisant l'outil Rights4Vapers, vous reconnaissez avoir lu et accepte ces Termes et Conditions.",
+    consentPrefix:
+      "En utilisant l'outil Rights4Vapers, vous reconnaissez avoir lu et accepte ces Termes et Conditions et la ",
+    consentPrivacyLabel: "Politique de confidentialite",
+    consentSuffix: ".",
     back: "Retour",
     accept: "Accepter",
   },
@@ -38,6 +44,9 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
   const lang: TermsLang = params.lang === "fr" ? "fr" : "en";
   const copy = CONTENT[lang];
   const termsParagraphs = splitTermsParagraphs(TERMS_TEXT[lang]);
+  const privacyPolicyText =
+    lang === "fr" ? "Politique de confidentialite" : "Privacy Policy";
+  const privacyPolicyHref = `/privacy-policy?lang=${lang}`;
 
   return (
     <main className="h-[calc(100dvh-7rem)] overflow-hidden bg-[#e9e9e9]">
@@ -53,14 +62,33 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
             </Text>
             {termsParagraphs.map((line) => (
               <Text key={line} as="p" size="sm" className="!leading-9 text-[#222]">
-                {line}
+                {line.split(privacyPolicyText).map((part, index, arr) => (
+                  <span key={`${line}-${index}`}>
+                    {part}
+                    {index < arr.length - 1 && (
+                      <Link
+                        href={privacyPolicyHref}
+                        className="text-[#145f8f] underline underline-offset-2 hover:text-[#0f4a6f]"
+                      >
+                        {privacyPolicyText}
+                      </Link>
+                    )}
+                  </span>
+                ))}
               </Text>
             ))}
           </div>
         </div>
 
         <Text as="p" size="sm" className="mt-4 !leading-7 font-bold text-[#333]">
-          {copy.consent}
+          {copy.consentPrefix}
+          <Link
+            href={privacyPolicyHref}
+            className="text-[#145f8f] underline underline-offset-2 hover:text-[#0f4a6f]"
+          >
+            {copy.consentPrivacyLabel}
+          </Link>
+          {copy.consentSuffix}
         </Text>
 
         <div className="mt-4 flex gap-3">
